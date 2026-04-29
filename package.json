@@ -1,7 +1,8 @@
 {
-  "devDependencies": {
-    "@nekosu/maa-tools": "1.0.23",
-    "@types/node": "^25.6.0",
-    "prettier-plugin-multiline-arrays": "^4.1.7"
-  }
+   "packageManager": "pnpm@10.33.2",
+   "devDependencies": {
+      "@nekosu/maa-tools": "1.0.23",
+      "@types/node": "^25.6.0",
+      "prettier-plugin-multiline-arrays": "^4.1.7"
+   }
 }
