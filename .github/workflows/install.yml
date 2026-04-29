@@ -8,7 +8,8 @@ env:
   MFAA_VERSION: ""
 
 permissions:
-  id-token: write # 启用 OIDC
+  contents: write
+  actions: write
 
 on:
   push:
