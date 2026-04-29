@@ -72,8 +72,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [win, macos, linux, android]
-        arch: [aarch64, x86_64]
+        os: [ win, macos, linux, android ]
+        arch: [ aarch64, x86_64 ]
       fail-fast: false
 
     steps:
@@ -97,7 +97,10 @@ jobs:
         uses: robinraju/release-downloader@v1
         with:
           repository: SweetSmellFox/MFAAvalonia
-          fileName: "MFAAvalonia-*-${{ (matrix.os == 'win' && 'win') || (matrix.os == 'macos' && 'osx') || (matrix.os == 'linux' && 'linux') }}-${{ (matrix.arch == 'x86_64' && 'x64') || (matrix.arch == 'aarch64' && 'arm64') }}*"
+          fileName: "MFAAvalonia-*-${{ (matrix.os == 'win' && 'win') || (matrix.os ==
+            'macos' && 'osx') || (matrix.os == 'linux' && 'linux') }}-${{
+            (matrix.arch == 'x86_64' && 'x64') || (matrix.arch == 'aarch64' &&
+            'arm64') }}*"
           latest: ${{ env.MFAA_VERSION == '' }}
           tag: ${{ env.MFAA_VERSION }}
           out-file-path: "MFA"
@@ -116,7 +119,7 @@ jobs:
         shell: bash
         run: |
           rm -rf MFA/runtimes
-      
+
       - name: Install
         shell: bash
         run: |
@@ -163,15 +166,16 @@ jobs:
           # 正式版：使用 tag-pattern 只匹配正式版标签，包含所有从上一个正式版以来的提交
           # 预发布版：正常生成，只包含从上一个标签以来的提交
           args: >-
-            -vv --latest --strip header
-            ${{ needs.meta.outputs.is_prerelease == 'false' && '--tag-pattern "^v[0-9]+\\.[0-9]+\\.[0-9]+$"' || '' }}
+            -vv --latest --strip header ${{ needs.meta.outputs.is_prerelease ==
+            'false' && '--tag-pattern "^v[0-9]+\\.[0-9]+\\.[0-9]+$"' || '' }}
         env:
           OUTPUT: CHANGES.md
           GITHUB_REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release:
     if: ${{ needs.meta.outputs.is_release == 'true' }}
-    needs: [meta, install, changelog]
+    needs: [ meta, install, changelog ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -183,7 +187,7 @@ jobs:
           for f in *; do
             (cd $f && zip -r ../$f-${{ needs.meta.outputs.tag }}.zip .)
           done
-          
+
       - uses: softprops/action-gh-release@v2
         with:
           files: assets/*
@@ -191,7 +195,6 @@ jobs:
           body: ${{ needs.changelog.outputs.release_body }}
           draft: false
           prerelease: ${{ needs.meta.outputs.is_prerelease == 'true' }}
-
         # Mirror酱为第三方分发服务，新项目默认关闭
         # 若有需要请联系 Mirror酱 开通，直接自行开启是无法使用的
         # https://mirrorchyan.com/
