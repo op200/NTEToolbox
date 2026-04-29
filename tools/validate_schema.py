@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
+import argparse
+import contextlib
 import json
 import sys
 import tempfile
-import argparse
 from pathlib import Path
+
 from jsonschema import Draft7Validator, Draft202012Validator
-from jsonschema.exceptions import ValidationError
 
 try:
-    from referencing import Registry, Resource
-    from referencing.jsonschema import DRAFT202012, DRAFT7
     import referencing.retrieval
+    from referencing import Registry, Resource
+    from referencing.jsonschema import DRAFT7, DRAFT202012
 
     HAS_REFERENCING = True
 except ImportError:
@@ -21,9 +22,7 @@ except ImportError:
 
 
 def strip_jsonc_comments(text):
-    """
-    移除 JSONC 注释，保持 JSON 结构完整
-    """
+    """移除 JSONC 注释，保持 JSON 结构完整"""
     # 状态机：0=正常, 1=字符串中, 2=转义字符
     result = []
     state = 0
@@ -70,9 +69,9 @@ def strip_jsonc_comments(text):
     return "".join(result)
 
 
-def load_jsonc(file_path):
+def load_jsonc(file_path: Path):
     """加载 JSONC 文件"""
-    with open(file_path, "r", encoding="utf-8") as f:
+    with file_path.open("r", encoding="utf-8") as f:
         content = f.read()
 
     # 移除注释
@@ -84,7 +83,7 @@ def load_jsonc(file_path):
         print(f"JSON decode error in {file_path}: {e}")
         # 调试：保存清理后的内容
         debug_file = Path(tempfile.gettempdir()) / f"debug_{Path(file_path).name}"
-        with open(debug_file, "w") as f:
+        with debug_file.open("w", encoding="utf-8") as f:
             f.write(clean_content)
         print(f"Cleaned content saved to {debug_file}")
         raise
@@ -96,15 +95,15 @@ def get_validator_class(schema):
 
     if "draft-07" in schema_uri or "draft/07" in schema_uri:
         return Draft7Validator
-    elif "2020-12" in schema_uri:
+    if "2020-12" in schema_uri:
         return Draft202012Validator
-    else:
-        # 默认使用 2020-12
-        return Draft202012Validator
+    # 默认使用 2020-12
+    return Draft202012Validator
 
 
-def find_line_number(file_path, json_path):
-    """在文件中查找JSON路径对应的行号
+def find_line_number(file_path: Path, json_path):
+    """
+    在文件中查找JSON路径对应的行号
 
     为了避免找到错误的子字段，只返回顶层对象的行号
     例如：/NoSmallGlobe/recognition -> 返回 NoSmallGlobe 的行号
@@ -116,8 +115,8 @@ def find_line_number(file_path, json_path):
     if not parts:
         return None
 
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
+    with contextlib.suppress(Exception):
+        with file_path.open("r", encoding="utf-8") as f:
             lines = f.readlines()
 
         # 只查找第一层（顶层对象）
@@ -132,13 +131,10 @@ def find_line_number(file_path, json_path):
             if pattern.search(line):
                 return i + 1  # 行号从1开始
 
-    except:
-        pass
-
     return None
 
 
-def validate_file(file_path, validator):
+def validate_file(file_path: Path, validator):
     """验证单个文件"""
     try:
         data = load_jsonc(file_path)
@@ -147,7 +143,7 @@ def validate_file(file_path, validator):
         if errors:
             print(f"\n❌ Validation failed for {file_path}:")
             print(f"   Found {len(errors)} error(s):")
-            for idx, error in enumerate(errors[:10], 1):
+            for _idx, error in enumerate(errors[:10], 1):
                 path = "/" + "/".join(str(p) for p in error.path) if error.path else "/"
                 # print(f"   {idx}. {path}: {error.message}")
 
@@ -164,12 +160,13 @@ def validate_file(file_path, validator):
             return False
 
         print(f"✓ {file_path}")
-        return True
     except Exception as e:
         print(f"\n❌ Error validating {file_path}: {e}")
         # 输出GitHub Actions格式的错误注解
         print(f"::error file={file_path},title=Validation Error::{e}")
         return False
+    else:
+        return True
 
 
 def create_validator(schema, schema_store):
@@ -191,20 +188,19 @@ def create_validator(schema, schema_store):
             registry = registry.with_resource(uri, resource)
 
         return ValidatorClass(schema, registry=registry)
-    else:
-        # 回退到旧的 RefResolver
-        # 从 schema_store 中找到主 schema 的 URI
-        schema_uri = None
-        for uri, content in schema_store.items():
-            if content == schema:
-                schema_uri = uri
-                break
+    # 回退到旧的 RefResolver
+    # 从 schema_store 中找到主 schema 的 URI
+    schema_uri = None
+    for uri, content in schema_store.items():
+        if content == schema:
+            schema_uri = uri
+            break
 
-        if schema_uri is None:
-            schema_uri = "file:///schema.json"
+    if schema_uri is None:
+        schema_uri = "file:///schema.json"
 
-        resolver = RefResolver(base_uri=schema_uri, referrer=schema, store=schema_store)
-        return ValidatorClass(schema, resolver=resolver)
+    resolver = RefResolver(base_uri=schema_uri, referrer=schema, store=schema_store)
+    return ValidatorClass(schema, resolver=resolver)
 
 
 def main():
@@ -280,15 +276,16 @@ def main():
     # 准备排除目录列表
     exclude_paths = [Path(d).resolve() for d in args.exclude_dirs]
 
-    def is_excluded(file_path):
+    def is_excluded(file_path) -> bool:
         """检查文件是否在排除目录中"""
         file_path = Path(file_path).resolve()
         for exclude_path in exclude_paths:
             try:
                 file_path.relative_to(exclude_path)
-                return True
             except ValueError:
                 continue
+            else:
+                return True
         return False
 
     print("Validating pipeline resources...")

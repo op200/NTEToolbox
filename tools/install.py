@@ -1,7 +1,6 @@
-from pathlib import Path
-
 import shutil
 import sys
+from pathlib import Path
 
 try:
     import jsonc
@@ -14,10 +13,9 @@ except ModuleNotFoundError as e:
 
 from configure import configure_ocr_model
 
-
 working_dir = Path(__file__).parent.parent.resolve()
 install_path = working_dir / Path("install")
-version = len(sys.argv) > 1 and sys.argv[1] or "v0.0.1"
+version = (len(sys.argv) > 1 and sys.argv[1]) or "v0.0.1"
 
 # the first parameter is self name
 if sys.argv.__len__() < 4:
@@ -98,9 +96,7 @@ def install_deps():
         )
 
 
-
 def install_resource():
-
     configure_ocr_model()
 
     shutil.copytree(

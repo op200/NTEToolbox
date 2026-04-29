@@ -1,0 +1,67 @@
+{
+   "启动钓鱼": {
+      "recognition": "DirectHit",
+      "next": "初始状态"
+   },
+   "初始状态": {
+      // 有按钮就按 F
+      "recognition": {
+         "type": "FeatureMatch",
+         "param": {
+            "roi": [904, 610, 318, 100],
+            "template": "fish/初始按钮排.png"
+         }
+      },
+      "action": {
+         "type": "ClickKey",
+         "param": {
+            "key": 70 // F
+         }
+      },
+      "next": ["上鱼", "初始状态"]
+   },
+   "上鱼": {
+      "recognition": {
+         "type": "OCR",
+         "param": {
+            "roi": [320, 80, 680, 26],
+            "expected": ["鱼耐力", "鱼线"]
+         }
+      },
+      "next": "溜鱼"
+   },
+   "溜鱼": {
+      "rate_limit": 200,
+      "recognition": {
+         "type": "ColorMatch",
+         "param": {
+            "roi": [400, 40, 500, 18],
+            "lower": [32, 178, 160],
+            "upper": [60, 244, 197]
+         }
+      },
+      "action": {
+         "type": "Custom",
+         "param": {
+            "custom_action": "fish_溜鱼"
+         }
+      },
+      "next": ["获鱼", "溜鱼"]
+   },
+   "获鱼": {
+      "recognition": {
+         "type": "OCR",
+         "param": {
+            "roi": [550, 630, 160, 46],
+            "expected": "点击空白区域关闭"
+         }
+      },
+      "action": {
+         "type": "ClickKey",
+         "param": {
+            "key": 27 // ESC
+         }
+      },
+      "next": "初始状态"
+   }
+}

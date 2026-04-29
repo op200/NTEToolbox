@@ -1,0 +1,6 @@
+{
+   "钓鱼01": {
+      "recognition": "DirectHit",
+      "next": "启动钓鱼"
+   }
+}
