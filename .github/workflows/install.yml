@@ -33,7 +33,7 @@ jobs:
   meta:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - id: set_tag
@@ -144,7 +144,7 @@ jobs:
           python ./install.py ${{ needs.meta.outputs.tag }} ${{ matrix.os }} ${{ matrix.arch }}
           cd ..
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: MaaXXX-${{ matrix.os }}-${{ matrix.arch }}
           path: "install"
@@ -190,7 +190,7 @@ jobs:
             (cd $f && zip -r ../$f-${{ needs.meta.outputs.tag }}.zip .)
           done
 
-      - uses: softprops/action-gh-release@v3
+      - uses: softprops/action-gh-release@v2.4.2
         with:
           files: assets/*
           tag_name: ${{ needs.meta.outputs.tag }}
