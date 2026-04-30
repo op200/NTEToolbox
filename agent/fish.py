@@ -7,6 +7,7 @@ from maa.custom_action import CustomAction
 if TYPE_CHECKING:
     from maa.context import Context
 
+MAX_RANGE = 60
 GY_ROI = [400, 40, 500, 18]
 
 
@@ -20,7 +21,7 @@ class Fish_溜鱼(CustomAction):
     ) -> bool:
         controller = context.tasker.controller
 
-        while True:
+        for _ in range(MAX_RANGE):
             img = controller.post_screencap().get(wait=True)
 
             greem_reco_detail = context.run_recognition(
@@ -83,3 +84,6 @@ class Fish_溜鱼(CustomAction):
             controller.post_key_down(key).wait()
             time.sleep(min(0.6, max(0.02, abs(diff) / 200)))
             controller.post_key_up(key).wait()
+
+        print(f"超出 {MAX_RANGE} 次循环")
+        return True
