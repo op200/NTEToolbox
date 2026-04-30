@@ -130,7 +130,7 @@ jobs:
         run: |
           cd tools/
           python -m pip install -r ./requirements.txt
-          python ./install.py ${{ needs.meta.outputs.tag }} ${{ matrix.os }} ${{ matrix.arch }} --gui mfaa
+          python ./install.py --version "${{ needs.meta.outputs.tag }}" --os "${{ matrix.os }}" --arch "${{ matrix.arch }}" --gui mfaa
 
       - name: Prepare artifact for MFAA
         id: mfaa_artifact
@@ -196,7 +196,7 @@ jobs:
         run: |
           cd tools/
           python -m pip install -r ./requirements.txt
-          python ./install.py ${{ needs.meta.outputs.tag }} ${{ matrix.os }} ${{ matrix.arch }} --gui mxu
+          python ./install.py --version "${{ needs.meta.outputs.tag }}" --os "${{ matrix.os }}" --arch "${{ matrix.arch }}" --gui mxu
 
       - name: Prepare artifact for MXU
         if: matrix.os != 'android' && (matrix.os != 'linux' || matrix.arch == 'x86_64')
