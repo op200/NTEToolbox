@@ -130,7 +130,7 @@ jobs:
         run: |
           cd tools/
           python -m pip install -r ./requirements.txt
-          python ./install.py ${{ needs.meta.outputs.tag }} ${{ matrix.os }} ${{ matrix.arch }}
+          python ./install.py ${{ needs.meta.outputs.tag }} ${{ matrix.os }} ${{ matrix.arch }} --gui mfaa
 
       - name: Prepare artifact for MFAA
         id: mfaa_artifact
@@ -138,11 +138,9 @@ jobs:
         run: |
           ARTIFACT_NAME="NTEToolbox-MFAA-${{ matrix.os }}-${{ matrix.arch }}"
           if [[ "${{ matrix.os }}" == "win" ]] || [[ "${{ matrix.os }}" == "macos" ]]; then
-            # Windows/macOS: create 7z, upload the file
             7z a -t7z -mx=9 -m0=lzma2 -mfb=273 "${ARTIFACT_NAME}.7z" ./install/*
             echo "artifact_path=${ARTIFACT_NAME}.7z" >> $GITHUB_OUTPUT
           else
-            # Other platforms: upload the whole directory, let upload-artifact zip it
             echo "artifact_path=install" >> $GITHUB_OUTPUT
           fi
 
@@ -187,13 +185,6 @@ jobs:
             find MXU -mindepth 1 ! -name 'mxu' -exec rm -rf {} +
           fi
 
-      - name: Setup maafw for MXU
-        if: matrix.os != 'android' && (matrix.os != 'linux' || matrix.arch == 'x86_64')
-        shell: bash
-        run: |
-          mkdir -p install/maafw
-          cp -r deps/bin/* install/maafw/
-
       - name: Copy MXU files to install
         if: matrix.os != 'android' && (matrix.os != 'linux' || matrix.arch == 'x86_64')
         shell: bash
@@ -205,7 +196,7 @@ jobs:
         run: |
           cd tools/
           python -m pip install -r ./requirements.txt
-          python ./install.py ${{ needs.meta.outputs.tag }} ${{ matrix.os }} ${{ matrix.arch }} --skip-deps
+          python ./install.py ${{ needs.meta.outputs.tag }} ${{ matrix.os }} ${{ matrix.arch }} --gui mxu
 
       - name: Prepare artifact for MXU
         if: matrix.os != 'android' && (matrix.os != 'linux' || matrix.arch == 'x86_64')
@@ -233,8 +224,7 @@ jobs:
     outputs:
       release_body: ${{ steps.git-cliff.outputs.content }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -265,14 +255,10 @@ jobs:
           mkdir -p release_assets
           cd artifacts
           for d in */; do
-            base="${d%/}"  # e.g., NTEToolbox-MFAA-win-x86_64
-            # Check if this artifact contains a .7z file
+            base="${d%/}"
             if [ -f "$base"/*.7z ]; then
-              # It's a pre-compressed 7z file
               mv "$base"/*.7z "../release_assets/${base}-${{ needs.meta.outputs.tag }}.7z"
             else
-              # It's a directory (upload-artifact zipped the folder)
-              # Re-zip the contents into a .zip file
               (cd "$base" && zip -r "../../release_assets/${base}-${{ needs.meta.outputs.tag }}.zip" .)
             fi
           done
