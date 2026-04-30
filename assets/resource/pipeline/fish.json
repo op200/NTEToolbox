@@ -20,9 +20,26 @@
             "key": 70 // F
          }
       },
-      "next": ["上鱼", "获鱼", "初始状态"]
+      "next": ["上鱼", "无饵", "获鱼", "初始状态"]
+   },
+   "无饵": {
+      "rate_limit": 100,
+      "recognition": {
+         "type": "OCR",
+         "param": {
+            "roi": [520, 342, 240, 36],
+            "expected": "需要装备鱼饵才可以钓鱼"
+         }
+      },
+      "focus": {
+         "Node.Action.Succeeded": {
+            "content": "钓鱼结束: 鱼饵用完",
+            "display": ["log", "notification"]
+         }
+      }
    },
    "上鱼": {
+      "rate_limit": 200,
       "recognition": {
          "type": "OCR",
          "param": {
@@ -46,6 +63,7 @@
       "next": ["获鱼", "溜鱼"]
    },
    "获鱼": {
+      "rate_limit": 500,
       "recognition": {
          "type": "OCR",
          "param": {
