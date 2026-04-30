@@ -20,7 +20,7 @@
             "key": 70 // F
          }
       },
-      "next": ["上鱼", "初始状态"]
+      "next": ["上鱼", "获鱼", "初始状态"]
    },
    "上鱼": {
       "recognition": {
@@ -34,14 +34,9 @@
    },
    "溜鱼": {
       "rate_limit": 200,
-      "recognition": {
-         "type": "ColorMatch",
-         "param": {
-            "roi": [400, 40, 500, 18],
-            "lower": [32, 178, 160],
-            "upper": [60, 244, 197]
-         }
-      },
+      "timeout": 6000,
+      "on_error": "初始状态",
+      "recognition": "DirectHit",
       "action": {
          "type": "Custom",
          "param": {
