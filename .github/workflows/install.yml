@@ -155,7 +155,7 @@ jobs:
           mkdir install
 
       - name: Download MXU
-        if: matrix.os != 'android'
+        if: matrix.os != 'android' && (matrix.os != 'linux' || matrix.arch == 'x86_64')
         id: download_mxu
         uses: robinraju/release-downloader@v1
         with:
@@ -167,28 +167,30 @@ jobs:
           extract: true
 
       - name: Clean up MXU archive
-        if: matrix.os != 'android'
+        if: matrix.os != 'android' && (matrix.os != 'linux' || matrix.arch == 'x86_64')
         shell: bash
         run: |
           ARCHIVE_FILE_PATH="${{ fromJson(steps.download_mxu.outputs.downloaded_files)[0] }}"
           rm -f "${ARCHIVE_FILE_PATH}"
           echo "Archive cleanup command executed for MXU."
 
-      - name: Remove built-in runtime in MXU
-        if: matrix.os != 'android'
+      - name: Setup maafw for MXU (copy MaaFramework bin)
+        if: matrix.os != 'android' && (matrix.os != 'linux' || matrix.arch == 'x86_64')
         shell: bash
         run: |
-          rm -rf MXU/runtimes
+          mkdir -p install/maafw
+          cp -r deps/bin/* install/maafw/
+          echo "MaaFramework bin copied to maafw for MXU."
 
       - name: Copy MXU files to install
-        if: matrix.os != 'android'
+        if: matrix.os != 'android' && (matrix.os != 'linux' || matrix.arch == 'x86_64')
         shell: bash
         run: |
           rsync -av --ignore-existing MXU/ install/
           echo "MXU files copied successfully."
 
       - name: Install (MXU)
-        if: matrix.os != 'android'
+        if: matrix.os != 'android' && (matrix.os != 'linux' || matrix.arch == 'x86_64')
         shell: bash
         run: |
           cd tools/
@@ -197,7 +199,7 @@ jobs:
           cd ..
 
       - uses: actions/upload-artifact@v7
-        if: matrix.os != 'android'
+        if: matrix.os != 'android' && (matrix.os != 'linux' || matrix.arch == 'x86_64')
         with:
           name: NTEToolbox-MXU-${{ matrix.os }}-${{ matrix.arch }}
           path: "install"
