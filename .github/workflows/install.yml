@@ -132,10 +132,24 @@ jobs:
           python -m pip install -r ./requirements.txt
           python ./install.py ${{ needs.meta.outputs.tag }} ${{ matrix.os }} ${{ matrix.arch }}
 
+      - name: Prepare artifact for MFAA
+        id: mfaa_artifact
+        shell: bash
+        run: |
+          ARTIFACT_NAME="NTEToolbox-MFAA-${{ matrix.os }}-${{ matrix.arch }}"
+          if [[ "${{ matrix.os }}" == "win" ]] || [[ "${{ matrix.os }}" == "macos" ]]; then
+            # Windows/macOS: create 7z, upload the file
+            7z a -t7z -mx=9 -m0=lzma2 -mfb=273 "${ARTIFACT_NAME}.7z" ./install/*
+            echo "artifact_path=${ARTIFACT_NAME}.7z" >> $GITHUB_OUTPUT
+          else
+            # Other platforms: upload the whole directory, let upload-artifact zip it
+            echo "artifact_path=install" >> $GITHUB_OUTPUT
+          fi
+
       - uses: actions/upload-artifact@v7
         with:
           name: NTEToolbox-MFAA-${{ matrix.os }}-${{ matrix.arch }}
-          path: "install"
+          path: ${{ steps.mfaa_artifact.outputs.artifact_path }}
 
       # --------------------- MXU ---------------------
       - name: Clean install directory for MXU
@@ -193,11 +207,24 @@ jobs:
           python -m pip install -r ./requirements.txt
           python ./install.py ${{ needs.meta.outputs.tag }} ${{ matrix.os }} ${{ matrix.arch }} --skip-deps
 
+      - name: Prepare artifact for MXU
+        if: matrix.os != 'android' && (matrix.os != 'linux' || matrix.arch == 'x86_64')
+        id: mxu_artifact
+        shell: bash
+        run: |
+          ARTIFACT_NAME="NTEToolbox-MXU-${{ matrix.os }}-${{ matrix.arch }}"
+          if [[ "${{ matrix.os }}" == "win" ]] || [[ "${{ matrix.os }}" == "macos" ]]; then
+            7z a -t7z -mx=9 -m0=lzma2 -mfb=273 "${ARTIFACT_NAME}.7z" ./install/*
+            echo "artifact_path=${ARTIFACT_NAME}.7z" >> $GITHUB_OUTPUT
+          else
+            echo "artifact_path=install" >> $GITHUB_OUTPUT
+          fi
+
       - uses: actions/upload-artifact@v7
         if: matrix.os != 'android' && (matrix.os != 'linux' || matrix.arch == 'x86_64')
         with:
           name: NTEToolbox-MXU-${{ matrix.os }}-${{ matrix.arch }}
-          path: "install"
+          path: ${{ steps.mxu_artifact.outputs.artifact_path }}
 
   changelog:
     name: Generate changelog
@@ -230,24 +257,29 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          path: assets
+          path: artifacts
 
-      - name: Compress artifacts (7z for Windows/macOS, zip for others)
+      - name: Prepare release assets
         shell: bash
         run: |
-          cd assets
-          for f in *; do
-            if [[ "$f" == *win* ]] || [[ "$f" == *macos* ]]; then
-              # 7z with LZMA2, max preset, and max word size (fast bytes) = 273
-              (cd "$f" && 7z a -t7z -mx=9 -m0=lzma2 -mfb=273 "../$f-${{ needs.meta.outputs.tag }}.7z" .)
+          mkdir -p release_assets
+          cd artifacts
+          for d in */; do
+            base="${d%/}"  # e.g., NTEToolbox-MFAA-win-x86_64
+            # Check if this artifact contains a .7z file
+            if [ -f "$base"/*.7z ]; then
+              # It's a pre-compressed 7z file
+              mv "$base"/*.7z "../release_assets/${base}-${{ needs.meta.outputs.tag }}.7z"
             else
-              (cd "$f" && zip -r "../$f-${{ needs.meta.outputs.tag }}.zip" .)
+              # It's a directory (upload-artifact zipped the folder)
+              # Re-zip the contents into a .zip file
+              (cd "$base" && zip -r "../../release_assets/${base}-${{ needs.meta.outputs.tag }}.zip" .)
             fi
           done
 
       - uses: softprops/action-gh-release@v2.2.2
         with:
-          files: assets/*
+          files: release_assets/*
           tag_name: ${{ needs.meta.outputs.tag }}
           body: ${{ needs.changelog.outputs.release_body }}
           draft: false
