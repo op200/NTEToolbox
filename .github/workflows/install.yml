@@ -191,7 +191,7 @@ jobs:
         run: |
           cd tools/
           python -m pip install -r ./requirements.txt
-          python ./install.py ${{ needs.meta.outputs.tag }} ${{ matrix.os }} ${{ matrix.arch }}
+          python ./install.py ${{ needs.meta.outputs.tag }} ${{ matrix.os }} ${{ matrix.arch }} --skip-deps
 
       - uses: actions/upload-artifact@v7
         if: matrix.os != 'android' && (matrix.os != 'linux' || matrix.arch == 'x86_64')

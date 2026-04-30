@@ -19,12 +19,13 @@ version = (len(sys.argv) > 1 and sys.argv[1]) or "v0.0.1"
 
 # the first parameter is self name
 if sys.argv.__len__() < 4:
-    print("Usage: python install.py <version> <os> <arch>")
+    print("Usage: python install.py <version> <os> <arch> [--skip-deps]")
     print("Example: python install.py v1.0.0 win x86_64")
     sys.exit(1)
 
 os_name = sys.argv[2]
 arch = sys.argv[3]
+skip_deps = "--skip-deps" in sys.argv
 
 
 def get_dotnet_platform_tag():
@@ -109,12 +110,12 @@ def install_resource():
         install_path,
     )
 
-    with open(install_path / "interface.json", "r", encoding="utf-8") as f:
+    with (install_path / "interface.json").open("r", encoding="utf-8") as f:
         interface = jsonc.load(f)
 
     interface["version"] = version
 
-    with open(install_path / "interface.json", "w", encoding="utf-8") as f:
+    with (install_path / "interface.json").open("w", encoding="utf-8") as f:
         jsonc.dump(interface, f, ensure_ascii=False, indent=4)
 
 
@@ -138,7 +139,8 @@ def install_agent():
 
 
 if __name__ == "__main__":
-    install_deps()
+    if not skip_deps:
+        install_deps()
     install_resource()
     install_chores()
     install_agent()
