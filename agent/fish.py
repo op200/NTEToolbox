@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from maa.context import Context
 
 MAX_RANGE = 60
-GY_ROI = [400, 40, 500, 18]
+GY_ROI = [404, 44, 478, 12]
 
 
 @AgentServer.custom_action("fish_溜鱼")
