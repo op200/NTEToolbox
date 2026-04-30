@@ -6,7 +6,6 @@ env:
   # - 设置 VERSION 为具体版本号时（如 v1.2.3），下载指定版本
   MAAFW_VERSION: ""
   MFAA_VERSION: ""
-  MXU_VERSION: ""
 
 permissions:
   contents: write
@@ -119,26 +118,6 @@ jobs:
           rm -f "${ARCHIVE_FILE_PATH}"
           echo "Archive cleanup command executed for MFAAvalonia."
 
-      - name: Download MXU
-        if: matrix.os != 'android'
-        id: download_mxu
-        uses: robinraju/release-downloader@v1
-        with:
-          repository: MistEO/MXU
-          fileName: "MXU-${{ matrix.os }}-${{ matrix.arch }}*"
-          latest: ${{ env.MXU_VERSION == '' }}
-          tag: ${{ env.MXU_VERSION }}
-          out-file-path: "MXU"
-          extract: true
-
-      - name: Clean up MXU archive
-        if: matrix.os != 'android'
-        shell: bash
-        run: |
-          ARCHIVE_FILE_PATH="${{ fromJson(steps.download_mxu.outputs.downloaded_files)[0] }}"
-          rm -f "${ARCHIVE_FILE_PATH}"
-          echo "Archive cleanup command executed for MXU."
-
       - name: Remove built-in runtime in MFA
         if: matrix.os != 'android'
         shell: bash
@@ -149,27 +128,16 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.os }}" != "android" ]]; then
-            # 处理 MFAAvalonia
             if [ -d "MFA" ]; then
               echo "Copying MFA files to install directory..."
-              mkdir -p install/MFAAvalonia
-              rsync -av --ignore-existing MFA/ install/MFAAvalonia/
+              mkdir -p install
+              rsync -av --ignore-existing MFA/ install/
               echo "MFA files copied successfully."
             else
               echo "MFA directory not found, skipping copy."
             fi
-
-            # 处理 MXU
-            if [ -d "MXU" ]; then
-              echo "Copying MXU files to install directory..."
-              mkdir -p install/MXU
-              rsync -av --ignore-existing MXU/ install/MXU/
-              echo "MXU files copied successfully."
-            else
-              echo "MXU directory not found, skipping copy."
-            fi
           else
-            echo "Skipping copy MFA and MXU for Android."
+            echo "Skipping copy MFA for Android."
           fi
 
           cd tools/
@@ -220,20 +188,7 @@ jobs:
       - run: |
           cd assets
           for f in *; do
-            # f 格式为 NTEToolbox-{os}-{arch}
-            suffix=${f#NTEToolbox-}
-            # 检查artifact中包含的内容
-            if [ -d "$f/MFAAvalonia" ] && [ -d "$f/MXU" ]; then
-              # 分离MFAAvalonia和MXU
-              (cd $f/MFAAvalonia && zip -r ../NTEToolbox-${{ needs.meta.outputs.tag }}-MFAAvalonia-${suffix}.zip .)
-              (cd $f/MXU && zip -r ../NTEToolbox-${{ needs.meta.outputs.tag }}-MXU-${suffix}.zip .)
-            elif [ -d "$f/MFAAvalonia" ]; then
-              (cd $f && zip -r ../NTEToolbox-${{ needs.meta.outputs.tag }}-MFAAvalonia-${suffix}.zip .)
-            elif [ -d "$f/MXU" ]; then
-              (cd $f && zip -r ../NTEToolbox-${{ needs.meta.outputs.tag }}-MXU-${suffix}.zip .)
-            else
-              (cd $f && zip -r ../NTEToolbox-${{ needs.meta.outputs.tag }}-${suffix}.zip .)
-            fi
+            (cd $f && zip -r ../$f-${{ needs.meta.outputs.tag }}.zip .)
           done
 
       - uses: softprops/action-gh-release@v2.2.2
