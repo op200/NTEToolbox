@@ -1,9 +1,11 @@
 {
    "启动钓鱼": {
+      "rate_limit": 200,
       "recognition": "DirectHit",
       "next": "初始状态"
    },
    "初始状态": {
+      "rate_limit": 500,
       // 有按钮就按 F
       "recognition": {
          "type": "FeatureMatch",

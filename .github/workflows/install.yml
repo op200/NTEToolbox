@@ -147,7 +147,7 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: MaaXXX-${{ matrix.os }}-${{ matrix.arch }}
+          name: NTEToolbox-${{ matrix.os }}-${{ matrix.arch }}
           path: "install"
 
   changelog:
