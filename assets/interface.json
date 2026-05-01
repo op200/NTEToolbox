@@ -8,7 +8,7 @@
    "description": "异环工具箱",
    "license": "AGPLv3",
    "github": "https://github.com/op200/NTEToolbox",
-   "version": "0.2.0",
+   "version": "0.2.1",
    "mirrorchyan_multiplatform": false,
    "controller": [
       {
@@ -48,17 +48,22 @@
    "option": {
       "弹钢琴设置": {
          "type": "input",
-         "label": "弹钢琴设置",
          "inputs": [
             {
-               "name": "mscz_path",
-               "label": "mscz 文件路径",
+               "name": "midi_path",
+               "label": "midi 文件路径",
                "pipeline_type": "string"
             },
             {
                "name": "bpm",
                "label": "默认 BPM",
                "pipeline_type": "string"
+            },
+            {
+               "name": "piano_mode",
+               "label": "钢琴模式（只能填 21 或 36）",
+               "pipeline_type": "string",
+               "default": "36"
             }
          ],
          "pipeline_override": {
@@ -66,8 +71,9 @@
                "action": {
                   "param": {
                      "custom_action_param": {
-                        "mscz_path": "{mscz_path}",
-                        "bpm": "{bpm}"
+                        "midi_path": "{midi_path}",
+                        "bpm": "{bpm}",
+                        "piano_mode": "{piano_mode}"
                      }
                   }
                }

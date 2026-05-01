@@ -4,7 +4,6 @@
       "recognition": {
          "type": "OCR",
          "param": {
-            "roi": [200, 450, 50, 230],
             "expected": ["高音", "中音", "低音"]
          }
       },
