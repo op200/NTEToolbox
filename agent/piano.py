@@ -198,7 +198,7 @@ class Piano_play(CustomAction):
             return False
 
         # 5. 获取速度
-        bpm = float(param.get("bpm", 120))
+        bpm = float(param.get("bpm") or 120)
         try:
             # 尝试从乐谱中提取第一个速度标记
             for el in midi_converted.recurse().getElementsByClass("MetronomeMark"):
