@@ -6,8 +6,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple, override
 
-import music21
-import music21.common.types
 from maa.agent.agent_server import AgentServer
 from maa.custom_action import CustomAction
 
@@ -42,14 +40,6 @@ class Key:
     key: int
 
 
-class NoteEvent(NamedTuple):
-    """用于存储音符事件的简易结构"""
-
-    quarterbeats: music21.common.types.OffsetQL
-    midi: int
-    velocity: int  # 暂未使用，但可从 MIDI 中提取
-
-
 MIDI_SUFFIX_SET: set[str] = {".mid", ".midi"}
 
 
@@ -61,7 +51,17 @@ class Piano_play(CustomAction):
         context: Context,
         argv: CustomAction.RunArg,
     ) -> bool:
+        import music21
+        import music21.common.types
+
         controller = context.tasker.controller
+
+        class NoteEvent(NamedTuple):
+            """用于存储音符事件的简易结构"""
+
+            quarterbeats: music21.common.types.OffsetQL
+            midi: int
+            velocity: int  # 暂未使用，但可从 MIDI 中提取
 
         param = json.loads(argv.custom_action_param)
         assert isinstance(param, dict)

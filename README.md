@@ -8,11 +8,34 @@
 
 ## 下载与使用
 
+### GUI
+
 目前会自动打包 MFAA 和 MXU 两种 GUI，觉得哪个好用就用哪个
+
+* #### MFAA
+
+  启动时会自动判断 dotnet 和 c++ 运行时  
+  若电脑中没有对应运行时，需按提示在微软官网下载
+
+* #### MXU
+
+  体积小，执行效率也比 MFAA 高  
+  如果觉得 MFAA 钓鱼时溜鱼跟随不及时，最好换用这个 GUI
+
+### 启动
+
+打开文件夹内对应的 GUI 的 exe 文件（Windows）即可启动
 
 **因为要支持后台运行，所以必须使用管理员模式打开，如果嫌每次都要右键exe麻烦，可以在属性里把该exe设为 `以管理员身份运行此程序`**
 
-依赖 Python，自行安装 [Python 3.14](https://www.python.org/downloads/release/python-3144/) 或更高版本
+### 依赖
+
+依赖 Python，自行安装 [Python 3.14](https://www.python.org/downloads/release/python-3144/) 或更高版本，Windows 用户安装时记得勾选添加到 PATH
+
+需要安装 Python 包 `maafw`  
+（安装并更新命令: `pip install -U maafw`）
+
+*如果发现 GUI 中任务执行到一半直接失败，那么大概是调用 Python 失败*
 
 ## 功能
 

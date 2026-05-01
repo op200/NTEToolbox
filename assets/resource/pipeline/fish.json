@@ -5,13 +5,14 @@
       "next": ["上鱼", "无饵", "获鱼", "初始状态"]
    },
    "初始状态": {
-      "rate_limit": 500,
+      "rate_limit": 400,
       // 有按钮就按 F
       "recognition": {
          "type": "FeatureMatch",
          "param": {
             "roi": [904, 610, 318, 100],
-            "template": "fish/初始按钮排.png"
+            "template": "fish/初始按钮排.png",
+            "ratio": 0.8
          }
       },
       "action": {
