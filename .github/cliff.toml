@@ -1,6 +1,6 @@
 [remote.github]
 owner = "MaaXYZ"
-repo = "MaaPracticeBoilerplate"
+repo  = "MaaPracticeBoilerplate"
 #自用时换成自己的仓库owner和repo
 #注意，本地git user需与github一致才能实现成功@
 [changelog]
@@ -66,29 +66,27 @@ footer = """
 
 [git]
 # 过滤提交
-conventional_commits = true # 使用约定式提交格式
-filter_unconventional = false # 不过滤非约定式提交
-# 启用完整的 commit 信息
-split_commits = false
-# 保留完整的 commit body
-protect_breaking_commits = false
 commit_parsers = [
     # 跳过包含 [skip changelog] 的 commit
-    { message = ".*\\[skip changelog\\].*", skip = true },
     { body = ".*\\[skip changelog\\].*", skip = true },
+    { body = ".*security", group = "<!-- 9 -->🔒 安全" },
+    { message = ".*\\[skip changelog\\].*", skip = true },
+    { message = "^chore", group = "<!-- 8 -->🔧 日常维护" },
+    { message = "^chore\\(deps\\)", group = "� 依赖更新" },
+    { message = "^ci", group = "<!-- 7 -->⚙️ 持续集成" },
+    { message = "^docs", group = "<!-- 4 -->� 文档" },
     { message = "^feat", group = "<!-- 0 -->✨ 新功能" },
     { message = "^fix", group = "<!-- 1 -->🐛 Bug修复" },
-    { message = "^docs", group = "<!-- 4 -->📚 文档" },
     { message = "^perf", group = "<!-- 3 -->🚀 性能优化" },
-    { message = "^refactor", group = "<!-- 2 -->🚜 代码重构" },
+    { message = "^refactor", group = "<!-- 2 -->� 代码重构" },
+    { message = "^revert", group = "<!-- 10 -->◀️ 撤销" },
     { message = "^style", group = "<!-- 5 -->🎨 样式" },
     { message = "^test", group = "<!-- 6 -->🧪 测试" },
-    { message = "^chore\\(deps\\)", group = "📦 依赖更新" },
-    { message = "^chore", group = "<!-- 8 -->🔧 日常维护" },
-    { message = "^ci", group = "<!-- 7 -->⚙️ 持续集成" },
-    { body = ".*security", group = "<!-- 9 -->🔒 安全" },
-    { message = "^revert", group = "<!-- 10 -->◀️ 撤销" },
 ]
+conventional_commits = true # 使用约定式提交格式
+filter_unconventional = false # 不过滤非约定式提交
+protect_breaking_commits = true # 保留完整的 commit body
+split_commits = true # 启用完整的 commit 信息
 
 # 忽略这些提交
 ignore_tags = "rc"
