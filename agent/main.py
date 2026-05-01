@@ -1,11 +1,13 @@
 import sys
 
 import fish
+import piano
 from maa.agent.agent_server import AgentServer
 from maa.toolkit import Toolkit
 
 __all__ = [
     "fish",
+    "piano",
 ]
 
 

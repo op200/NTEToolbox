@@ -8,7 +8,7 @@
    "description": "异环工具箱",
    "license": "AGPLv3",
    "github": "https://github.com/op200/NTEToolbox",
-   "version": "0.1.9",
+   "version": "0.2.0",
    "mirrorchyan_multiplatform": false,
    "controller": [
       {
@@ -38,6 +38,41 @@
       {
          "name": "钓鱼",
          "entry": "钓鱼01"
+      },
+      {
+         "name": "弹钢琴",
+         "entry": "弹钢琴01",
+         "option": ["弹钢琴设置"]
       }
-   ]
+   ],
+   "option": {
+      "弹钢琴设置": {
+         "type": "input",
+         "label": "弹钢琴设置",
+         "inputs": [
+            {
+               "name": "mscz_path",
+               "label": "mscz 文件路径",
+               "pipeline_type": "string"
+            },
+            {
+               "name": "bpm",
+               "label": "默认 BPM",
+               "pipeline_type": "string"
+            }
+         ],
+         "pipeline_override": {
+            "启动弹钢琴": {
+               "action": {
+                  "param": {
+                     "custom_action_param": {
+                        "mscz_path": "{mscz_path}",
+                        "bpm": "{bpm}"
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
 }

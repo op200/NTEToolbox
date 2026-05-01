@@ -1,6 +1,12 @@
 {
    "钓鱼01": {
+      "rate_limit": 0,
       "recognition": "DirectHit",
       "next": "启动钓鱼"
+   },
+   "弹钢琴01": {
+      "rate_limit": 0,
+      "recognition": "DirectHit",
+      "next": "启动弹钢琴"
    }
 }
