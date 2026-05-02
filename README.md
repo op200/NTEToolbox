@@ -20,7 +20,7 @@
 
 * #### MFAA
 
-  启动时会自动判断 [.NET](https://dotnet.microsoft.com) 和 [C++](https://learn.microsoft.com/zh-cn/windows/latest-supported-vc-redist) 运行时  
+  启动时会自动判断 [.NET](https://dotnet.microsoft.com) 和 [C++](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist) 运行时  
   若电脑中没有对应运行时，需按 GUI 给出的提示在微软官网下载或 GUI 自动下载
 
 * #### MXU
