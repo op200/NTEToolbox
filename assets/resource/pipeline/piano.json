@@ -1,6 +1,6 @@
 {
    "启动弹钢琴": {
-      "rate_limit": 200,
+      "rate_limit": 0,
       "recognition": {
          "type": "OCR",
          "param": {

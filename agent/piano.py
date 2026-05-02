@@ -1,10 +1,11 @@
 import enum
+import itertools
 import json
 import time
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, NamedTuple, override
+from typing import TYPE_CHECKING, Final, Literal, LiteralString, NamedTuple, override
 
 from maa.agent.agent_server import AgentServer
 from maa.custom_action import CustomAction
@@ -13,34 +14,59 @@ if TYPE_CHECKING:
     from maa.context import Context
     from maa.job import Job
 
-KEY_LIST: list[int] = [
+type Key_name = Literal["Z", "X", "C", "V", "B", "N", "M","A", "S", "D", "F", "G", "H", "J", "Q", "W", "E", "R", "T", "Y", "U"]  # fmt: off
+KN__CODE: Final[dict[Key_name, int]] = {
     # 低音 Z-M
-    # Z     X     C     V     B     N     M
-    *(0x5A, 0x58, 0x43, 0x56, 0x42, 0x4E, 0x4D),
+    **{"Z": 0x5A, "X": 0x58, "C": 0x43, "V": 0x56, "B": 0x42, "N": 0x4E, "M": 0x4D},  # noqa: PIE800
     # 中音 A-J
-    # A     S     D     F     G     H     J
-    *(0x41, 0x53, 0x44, 0x46, 0x47, 0x48, 0x4A),
+    **{"A": 0x41, "S": 0x53, "D": 0x44, "F": 0x46, "G": 0x47, "H": 0x48, "J": 0x4A},  # noqa: PIE800
     # 高音 Q-U
-    # Q     W     E     R     T     Y     U
-    *(0x51, 0x57, 0x45, 0x52, 0x54, 0x59, 0x55),
-]
+    **{"Q": 0x51, "W": 0x57, "E": 0x45, "R": 0x52, "T": 0x54, "Y": 0x59, "U": 0x55},  # noqa: PIE800
+}
+
 LOW_PITCH_OVERFLOW_LINE, HIGH_PITCH_OVERFLOW_LINE = 59, 96
+
+
+DEFAULT_KN__MIDI: Final[dict[Key_name, int]] = {
+    **{"Z": 60, "X": 62, "C": 64, "V": 65, "B": 67, "N": 69, "M": 71},  # noqa: PIE800
+    **{"A": 72, "S": 74, "D": 76, "F": 77, "G": 79, "H": 81, "J": 83},  # noqa: PIE800
+    **{"Q": 84, "W": 86, "E": 88, "R": 89, "T": 91, "Y": 93, "U": 95},  # noqa: PIE800
+}
+
+CTRL_CHANGE_KN__MIDI: Final[dict[Key_name, int]] = {  # -1
+    kn: DEFAULT_KN__MIDI[kn] - 1
+    for kn in itertools.chain(
+        ("C", "M"),
+        ("D", "J"),
+        ("E", "U"),
+    )
+}
+SHIFT_CHANGE_KN__MIDI: Final[dict[Key_name, int]] = {  # +1
+    kn: DEFAULT_KN__MIDI[kn] + 1
+    for kn in itertools.chain(
+        ("Z", "V", "B"),
+        ("A", "F", "G"),
+        ("Q", "R", "T"),
+    )
+}
 
 
 @dataclass(slots=True, kw_only=True, frozen=True)
 class Key:
     class Mode(enum.Enum):
-        default = None
-        shift = 0x10
-        """高半音"""
-        ctrl = 0x11
-        """低半音"""
+        always = enum.auto()
+
+        only_ctrl = enum.auto()
+        no_ctrl = enum.auto()
+
+        only_shift = enum.auto()
+        no_shift = enum.auto()
 
     mode: Mode
-    key: int
+    code: int
 
 
-MIDI_SUFFIX_SET: set[str] = {".mid", ".midi"}
+MIDI_SUFFIX_SET: Final[set[LiteralString]] = {".mid", ".midi"}
 
 
 @AgentServer.custom_action("piano_play")
@@ -67,49 +93,45 @@ class Piano_play(CustomAction):
         assert isinstance(param, dict)
         print(param)
 
-        mode = param.get("piano_mode")
-        if mode not in {"21", "36"}:
-            print("模式必须是 21 或 36")
+        piano_mode = param.get("piano_mode")
+        if piano_mode not in {"21", "36"}:
+            print("钢琴模式必须是 21 或 36")
             return False
-        print(f"模式: {mode}")
+        print(f"钢琴模式: {piano_mode}")
+
+        timeout_mode = param.get("timeout_mode")
+        if timeout_mode not in {"同步时轴", "速率不变"}:
+            print("超时模式必须是 同步时轴 或 速率不变")
+            return False
+        print(f"超时模式: {timeout_mode}")
 
         midi__key: dict[int, Key] = {
-            midi: Key(mode=Key.Mode.default, key=KEY_LIST[i])
-            for i, midi in enumerate(
-                (
-                    *(60, 62, 64, 65, 67, 69, 71),
-                    *(72, 74, 76, 77, 79, 81, 83),
-                    *(84, 86, 88, 89, 91, 93, 95),
-                )
+            midi: Key(
+                mode=(
+                    Key.Mode.no_ctrl
+                    if kn in CTRL_CHANGE_KN__MIDI
+                    else Key.Mode.no_shift
+                    if kn in SHIFT_CHANGE_KN__MIDI
+                    else Key.Mode.always
+                ),
+                code=code,
             )
+            for kn, midi in DEFAULT_KN__MIDI.items()
+            if (code := KN__CODE[kn])
         }
 
-        if mode == "36":
-            midi__key |= {
-                midi: Key(mode=Key.Mode.ctrl, key=KEY_LIST[i])
-                for i, midi in enumerate(
-                    (
-                        # -1
-                        *(None, None, 63, None, None, None, 70),
-                        *(None, None, 75, None, None, None, 82),
-                        *(None, None, 87, None, None, None, 94),
-                    )
-                )
-                if midi is not None
-            } | {
-                midi: Key(mode=Key.Mode.shift, key=KEY_LIST[i])
-                for i, midi in enumerate(
-                    (
-                        # +1
-                        *(61, None, None, 66, 68, None, None),
-                        *(73, None, None, 78, 80, None, None),
-                        *(85, None, None, 90, 92, None, None),
-                    )
-                )
-                if midi is not None
+        if piano_mode == "36":
+            midi__key_ctrl = {
+                midi: Key(mode=Key.Mode.only_ctrl, code=KN__CODE[kn])
+                for kn, midi in CTRL_CHANGE_KN__MIDI.items()
             }
+            midi__key_shift = {
+                midi: Key(mode=Key.Mode.only_shift, code=KN__CODE[kn])
+                for kn, midi in SHIFT_CHANGE_KN__MIDI.items()
+            }
+            midi__key |= midi__key_ctrl | midi__key_shift
 
-        key_map: list[Key] = [Key(mode=Key.Mode.default, key=0x5A)] * (
+        key_map: list[Key] = [midi__key[DEFAULT_KN__MIDI["Z"]]] * (
             LOW_PITCH_OVERFLOW_LINE + 1
         )
         """midi -> key 的 list index 版"""
@@ -118,9 +140,7 @@ class Piano_play(CustomAction):
             if i in midi__key:
                 _val = midi__key[i]
             key_map.append(_val)
-        key_map += [Key(mode=Key.Mode.default, key=0x55)] * (
-            128 - HIGH_PITCH_OVERFLOW_LINE
-        )
+        key_map += [midi__key[DEFAULT_KN__MIDI["U"]]] * (128 - HIGH_PITCH_OVERFLOW_LINE)
 
         midi_path: Path | None = (
             None if (v := param.get("midi_path")) is None else Path(v)
@@ -230,52 +250,74 @@ class Piano_play(CustomAction):
 
         # 8. 开始按时间顺序模拟按键
         start_real = time.time()
+        timeout: float = 0
+        timeout_total: float = 0
         for qb in sorted(grouped.keys()):
             target_real = start_real + qb * quarter_sec
             now = time.time()
-            if target_real > now:
-                time.sleep(target_real - now)
-            else:
-                print(f"超时: {round((now - target_real) * 1000)}ms")
+            timeout = target_real + timeout_total - now
+            if timeout_mode == "同步时轴":
+                if target_real > now:
+                    time.sleep(target_real - now)
+                else:
+                    print(f"超时: {round((now - target_real) * 1000):>7,}ms")
+            else:  # noqa: PLR5501
+                if timeout >= 0:
+                    time.sleep(timeout)
+                else:
+                    timeout_total = now - target_real
+                    print(
+                        f"超时: {round((-timeout) * 1000):>5,}ms  {round(timeout_total * 1000):>7,}ms"
+                    )
 
             # 收集当前时间点的所有按键
-            keys: set[Key] = set()
-            for ne in grouped[qb]:
-                key: Key = key_map[ne.midi]
-                keys.add(key)
-
-            keys_default = [k for k in keys if k.mode == Key.Mode.default]
-            keys_shift = [k for k in keys if k.mode == Key.Mode.shift]
-            keys_ctrl = [k for k in keys if k.mode == Key.Mode.ctrl]
+            keys: set[Key] = {key_map[ne.midi] for ne in grouped[qb]}
 
             post_job_list: list[Job] = []
-            for key in keys_default:
-                post_job_list.append(controller.post_click_key(key.key))
-            for job in post_job_list:
-                job.wait()
 
-            # print(len(keys), keys_default, keys_shift, keys_ctrl)
-
-            if keys_shift:
-                controller.post_key_down(0x10).wait()
-
-                post_job_list.clear()
-                for key in keys_shift:
-                    post_job_list.append(controller.post_click_key(key.key))
+            if all(
+                k.mode not in {Key.Mode.only_ctrl, Key.Mode.only_shift} for k in keys
+            ):
+                for key in keys:
+                    post_job_list.append(controller.post_click_key(key.code))
                 for job in post_job_list:
                     job.wait()
 
-                controller.post_key_up(0x10).wait()
+            else:
+                key_list_always = [k for k in keys if k.mode == Key.Mode.always]
+                key_list_ctrl = [
+                    k for k in keys if k.mode in {Key.Mode.only_ctrl, Key.Mode.no_shift}
+                ]
+                key_list_shift = [
+                    k for k in keys if k.mode in {Key.Mode.only_shift, Key.Mode.no_ctrl}
+                ]
 
-            if keys_ctrl:
-                controller.post_key_down(0x11).wait()
+                # region: Shift and Always
+                if key_list_shift:
+                    controller.post_key_down(0x10).wait()
 
-                post_job_list.clear()
-                for key in keys_ctrl:
-                    post_job_list.append(controller.post_click_key(key.key))
-                for job in post_job_list:
-                    job.wait()
+                    for key in itertools.chain(key_list_shift, key_list_always):
+                        post_job_list.append(controller.post_click_key(key.code))
+                    for job in post_job_list:
+                        job.wait()
 
-                controller.post_key_up(0x11).wait()
+                    controller.post_key_up(0x10).wait()
+                # endregion
+
+                # region: Ctrl
+                if key_list_ctrl:
+                    controller.post_key_down(0x11).wait()
+
+                    post_job_list.clear()
+                    for key in itertools.chain(
+                        key_list_ctrl, () if key_list_shift else key_list_always
+                    ):
+                        if key.mode in {Key.Mode.only_ctrl, Key.Mode.no_shift}:
+                            post_job_list.append(controller.post_click_key(key.code))
+                    for job in post_job_list:
+                        job.wait()
+
+                    controller.post_key_up(0x11).wait()
+                # endregion
 
         return True

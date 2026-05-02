@@ -8,19 +8,41 @@
    "description": "异环工具箱",
    "license": "AGPLv3",
    "github": "https://github.com/op200/NTEToolbox",
-   "version": "0.2.3",
+   "version": "0.2.4",
    "mirrorchyan_multiplatform": false,
    "controller": [
+      // https://maafw.xyz/docs/2.4-ControlMethods
       {
-         "name": "桌面端",
+         "name": "桌面端_PostMessage（默认）",
          "type": "Win32",
          "win32": {
             "class_regex": ".*",
             "window_regex": "异环\\s*",
-            // https://maafw.xyz/docs/2.4-ControlMethods
             "screencap": "FramePool",
             "mouse": "PostMessage",
             "keyboard": "PostMessage"
+         }
+      },
+      {
+         "name": "桌面端_PostMessageWithWindowPos",
+         "type": "Win32",
+         "win32": {
+            "class_regex": ".*",
+            "window_regex": "异环\\s*",
+            "screencap": "FramePool",
+            "mouse": "PostMessageWithWindowPos",
+            "keyboard": "PostMessageWithWindowPos"
+         }
+      },
+      {
+         "name": "桌面端_Seize",
+         "type": "Win32",
+         "win32": {
+            "class_regex": ".*",
+            "window_regex": "异环\\s*",
+            "screencap": "FramePool",
+            "mouse": "Seize",
+            "keyboard": "Seize"
          }
       }
    ],
@@ -64,6 +86,12 @@
                "label": "钢琴模式（只能填 21 或 36）",
                "pipeline_type": "string",
                "default": "36"
+            },
+            {
+               "name": "timeout_mode",
+               "label": "超时模式（只能填 同步时轴 或 速率不变）",
+               "pipeline_type": "string",
+               "default": "速率不变"
             }
          ],
          "pipeline_override": {
@@ -73,7 +101,8 @@
                      "custom_action_param": {
                         "midi_path": "{midi_path}",
                         "bpm": "{bpm}",
-                        "piano_mode": "{piano_mode}"
+                        "piano_mode": "{piano_mode}",
+                        "timeout_mode": "{timeout_mode}"
                      }
                   }
                }
