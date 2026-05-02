@@ -76,7 +76,7 @@ class Fish_溜鱼(CustomAction):
             yellow_x = ybox.x + ybox.w / 2
             diff = green_x - yellow_x
 
-            if (diff_abs := abs(diff)) < 7:
+            if (diff_abs := abs(diff)) < 5:
                 time.sleep(0.005)
                 continue
 

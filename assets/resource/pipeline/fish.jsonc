@@ -53,7 +53,7 @@
    "溜鱼": {
       "rate_limit": 200,
       "timeout": 6000,
-      "on_error": "初始状态",
+      "on_error": "启动钓鱼",
       "recognition": "DirectHit",
       "action": {
          "type": "Custom",
@@ -61,7 +61,7 @@
             "custom_action": "fish_溜鱼"
          }
       },
-      "next": ["获鱼", "溜鱼"]
+      "next": ["获鱼", "初始状态", "溜鱼"]
    },
    "获鱼": {
       "rate_limit": 500,
