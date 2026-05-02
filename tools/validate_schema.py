@@ -5,11 +5,12 @@ import json
 import sys
 import tempfile
 from pathlib import Path
+from typing import NoReturn
 
 from jsonschema import Draft7Validator, Draft202012Validator
 
 try:
-    import referencing.retrieval
+    import referencing.retrieval  # noqa: F401
     from referencing import Registry, Resource
     from referencing.jsonschema import DRAFT7, DRAFT202012
 
@@ -21,7 +22,7 @@ except ImportError:
     HAS_REFERENCING = False
 
 
-def strip_jsonc_comments(text):
+def strip_jsonc_comments(text: str) -> str:
     """移除 JSONC 注释，保持 JSON 结构完整"""
     # 状态机：0=正常, 1=字符串中, 2=转义字符
     result = []
@@ -89,7 +90,9 @@ def load_jsonc(file_path: Path):
         raise
 
 
-def get_validator_class(schema):
+def get_validator_class(
+    schema: dict,
+) -> type[Draft7Validator | Draft202012Validator]:
     """根据 schema 的 $schema 字段选择合适的验证器"""
     schema_uri = schema.get("$schema", "")
 
@@ -101,7 +104,7 @@ def get_validator_class(schema):
     return Draft202012Validator
 
 
-def find_line_number(file_path: Path, json_path):
+def find_line_number(file_path: Path, json_path) -> int | None:
     """
     在文件中查找JSON路径对应的行号
 
@@ -134,7 +137,10 @@ def find_line_number(file_path: Path, json_path):
     return None
 
 
-def validate_file(file_path: Path, validator):
+def validate_file(
+    file_path: Path,
+    validator: Draft7Validator | Draft202012Validator,
+) -> bool:
     """验证单个文件"""
     try:
         data = load_jsonc(file_path)
@@ -169,20 +175,22 @@ def validate_file(file_path: Path, validator):
         return True
 
 
-def create_validator(schema, schema_store):
+def create_validator(
+    schema: dict, schema_store: dict
+) -> Draft202012Validator | Draft7Validator:
     """创建 validator，使用新的 referencing API 或回退到 RefResolver"""
     ValidatorClass = get_validator_class(schema)
 
     if HAS_REFERENCING:
         # 使用新的 referencing API
-        registry = Registry()
+        registry = Registry()  # pyright: ignore[reportPossiblyUnboundVariable]
 
         # 根据 schema 类型选择规范
-        spec = DRAFT202012 if ValidatorClass == Draft202012Validator else DRAFT7
+        spec = DRAFT202012 if ValidatorClass is Draft202012Validator else DRAFT7  # pyright: ignore[reportPossiblyUnboundVariable]
 
         # 添加所有 schema 到 registry
         for uri, schema_content in schema_store.items():
-            resource = Resource.from_contents(
+            resource = Resource.from_contents(  # pyright: ignore[reportPossiblyUnboundVariable]
                 schema_content, default_specification=spec
             )
             registry = registry.with_resource(uri, resource)
@@ -199,11 +207,11 @@ def create_validator(schema, schema_store):
     if schema_uri is None:
         schema_uri = "file:///schema.json"
 
-    resolver = RefResolver(base_uri=schema_uri, referrer=schema, store=schema_store)
+    resolver = RefResolver(base_uri=schema_uri, referrer=schema, store=schema_store)  # pyright: ignore[reportPossiblyUnboundVariable]
     return ValidatorClass(schema, resolver=resolver)
 
 
-def main():
+def main() -> NoReturn:
     parser = argparse.ArgumentParser(
         description="Validate JSON/JSONC files against JSON Schema"
     )

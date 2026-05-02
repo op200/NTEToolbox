@@ -69,19 +69,20 @@ footer = """
 commit_parsers = [
     # 跳过包含 [skip changelog] 的 commit
     { body = ".*\\[skip changelog\\].*", skip = true },
-    { body = ".*security", group = "<!-- 9 -->🔒 安全" },
+    { body = ".*security", group = "<!-- 10 -->🔒 安全" },
     { message = ".*\\[skip changelog\\].*", skip = true },
-    { message = "^chore", group = "<!-- 8 -->🔧 日常维护" },
-    { message = "^chore\\(deps\\)", group = "� 依赖更新" },
-    { message = "^ci", group = "<!-- 7 -->⚙️ 持续集成" },
-    { message = "^docs", group = "<!-- 4 -->� 文档" },
-    { message = "^feat", group = "<!-- 0 -->✨ 新功能" },
-    { message = "^fix", group = "<!-- 1 -->🐛 Bug修复" },
-    { message = "^perf", group = "<!-- 3 -->🚀 性能优化" },
-    { message = "^refactor", group = "<!-- 2 -->� 代码重构" },
-    { message = "^revert", group = "<!-- 10 -->◀️ 撤销" },
-    { message = "^style", group = "<!-- 5 -->🎨 样式" },
-    { message = "^test", group = "<!-- 6 -->🧪 测试" },
+    { message = "^((?i)bugfix|(?i)fix)", group = "<!-- 0 -->🐛 Bug 修复" },
+    { message = "^((?i)docs|(?i)documents?)", group = "<!-- 5 -->📚 文档更新" },
+    { message = "^((?i)feature|(?i)feat)", group = "<!-- 1 -->✨ 新功能" },
+    { message = "^((?i)improvements?|(?i)imp|(?i)impr)", group = "<!-- 2 -->✔ 优化" },
+    { message = "^((?i)perf|(?i)performance)", group = "<!-- 3 -->🚀 性能优化" },
+    { message = "^((?i)refactor|(?i)ref)", group = "<!-- 4 -->🔁 代码重构" },
+    { message = "^(?i)chore", group = "<!-- 9 -->🔧 日常维护" },
+    { message = "^(?i)chore\\(deps\\)", group = "📦 依赖更新" },
+    { message = "^(?i)ci", group = "<!-- 8 -->⚙️ 修改 CI" },
+    { message = "^(?i)revert", group = "<!-- 11 -->↩ 撤销更改" },
+    { message = "^(?i)style", group = "<!-- 6 -->🎨 样式调整" },
+    { message = "^(?i)test", group = "<!-- 7 -->🧪 修改测试代码" },
 ]
 conventional_commits = true # 使用约定式提交格式
 filter_unconventional = false # 不过滤非约定式提交

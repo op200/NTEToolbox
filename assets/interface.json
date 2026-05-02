@@ -1,14 +1,10 @@
 {
-   // 本文件主要定义了通用 UI 的行为和显示内容
-   // 可参考文档和示例添加更多您需要的功能
-   // 文档：https://maafw.xyz/docs/3.3-ProjectInterfaceV2
-   // 示例：https://github.com/MaaXYZ/MaaFramework/blob/main/sample/interface.json
    "interface_version": 2,
    "name": "NTEToolbox",
    "description": "异环工具箱",
    "license": "AGPLv3",
    "github": "https://github.com/op200/NTEToolbox",
-   "version": "0.2.5",
+   "version": "0.2.6",
    "resource": [
       {
          "name": "默认",
@@ -20,13 +16,13 @@
       "child_args": ["-u", "-m", "agent"]
    },
    "controller": [
-      // https://maafw.xyz/docs/2.4-ControlMethods
       {
          "name": "桌面端_PostMessage（默认）",
          "type": "Win32",
+         "permission_required": true,
          "win32": {
-            "class_regex": ".*",
-            "window_regex": "异环\\s*",
+            "class_regex": "UnrealWindow",
+            "window_regex": "^\\s*异环\\s*$",
             "screencap": "FramePool",
             "mouse": "PostMessage",
             "keyboard": "PostMessage"
@@ -35,9 +31,10 @@
       {
          "name": "桌面端_PostMessageWithWindowPos",
          "type": "Win32",
+         "permission_required": true,
          "win32": {
-            "class_regex": ".*",
-            "window_regex": "异环\\s*",
+            "class_regex": "UnrealWindow",
+            "window_regex": "^\\s*异环\\s*$",
             "screencap": "FramePool",
             "mouse": "PostMessageWithWindowPos",
             "keyboard": "PostMessageWithWindowPos"
@@ -47,8 +44,8 @@
          "name": "桌面端_Seize",
          "type": "Win32",
          "win32": {
-            "class_regex": ".*",
-            "window_regex": "异环\\s*",
+            "class_regex": "UnrealWindow",
+            "window_regex": "^\\s*异环\\s*$",
             "screencap": "FramePool",
             "mouse": "Seize",
             "keyboard": "Seize"

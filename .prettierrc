@@ -3,13 +3,5 @@
    "tabWidth": 3,
    "printWidth": 60,
    "endOfLine": "auto",
-   "trailingComma": "none",
-   "overrides": [
-      {
-         "files": ["*.json"],
-         "options": {
-            "parser": "jsonc"
-         }
-      }
-   ]
+   "trailingComma": "none"
 }

@@ -7,7 +7,7 @@ from maa.custom_action import CustomAction
 if TYPE_CHECKING:
     from maa.context import Context
 
-MAX_RANGE = 90
+MAX_RANGE = 120
 GY_ROI = [404, 44, 478, 12]
 
 
@@ -76,7 +76,7 @@ class Fish_溜鱼(CustomAction):
             yellow_x = ybox.x + ybox.w / 2
             diff = green_x - yellow_x
 
-            if abs(diff) < 3:
+            if (diff_abs := abs(diff)) < 7:
                 time.sleep(0.005)
                 continue
 
@@ -86,8 +86,8 @@ class Fish_溜鱼(CustomAction):
                 else 0x44  # D
             )
             controller.post_key_down(key).wait()
-            time.sleep(abs(diff) / 200)
+            time.sleep(diff_abs / 200)
             controller.post_key_up(key).wait()
 
-        print(f"超出 {MAX_RANGE} 次循环")
+        print(f"溜鱼超出 {MAX_RANGE} 次循环")
         return True
