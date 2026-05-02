@@ -8,8 +8,17 @@
    "description": "异环工具箱",
    "license": "AGPLv3",
    "github": "https://github.com/op200/NTEToolbox",
-   "version": "0.2.4",
-   "mirrorchyan_multiplatform": false,
+   "version": "0.2.5",
+   "resource": [
+      {
+         "name": "默认",
+         "path": ["./resource"]
+      }
+   ],
+   "agent": {
+      "child_exec": "python",
+      "child_args": ["-u", "-m", "agent"]
+   },
    "controller": [
       // https://maafw.xyz/docs/2.4-ControlMethods
       {
@@ -46,16 +55,6 @@
          }
       }
    ],
-   "resource": [
-      {
-         "name": "默认",
-         "path": ["./resource"]
-      }
-   ],
-   "agent": {
-      "child_exec": "python",
-      "child_args": ["-u", "./agent/main.py"]
-   },
    "task": [
       {
          "name": "钓鱼",

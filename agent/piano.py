@@ -1,6 +1,7 @@
 import enum
 import itertools
 import json
+import sys
 import time
 from collections import defaultdict
 from dataclasses import dataclass
@@ -10,11 +11,14 @@ from typing import TYPE_CHECKING, Final, Literal, LiteralString, NamedTuple, ove
 from maa.agent.agent_server import AgentServer
 from maa.custom_action import CustomAction
 
+from .global_val import Exit_code
+
 if TYPE_CHECKING:
     from maa.context import Context
     from maa.job import Job
 
 type Key_name = Literal["Z", "X", "C", "V", "B", "N", "M","A", "S", "D", "F", "G", "H", "J", "Q", "W", "E", "R", "T", "Y", "U"]  # fmt: off
+
 KN__CODE: Final[dict[Key_name, int]] = {
     # 低音 Z-M
     **{"Z": 0x5A, "X": 0x58, "C": 0x43, "V": 0x56, "B": 0x42, "N": 0x4E, "M": 0x4D},  # noqa: PIE800
@@ -77,8 +81,14 @@ class Piano_play(CustomAction):
         context: Context,
         argv: CustomAction.RunArg,
     ) -> bool:
-        import music21
-        import music21.common.types
+        try:
+            import music21
+        except ImportError:
+            print("maafw 未安装，执行以下命令以安装或更新: pip install -U maafw")
+            sys.exit(Exit_code.import_failed.value)
+
+        if TYPE_CHECKING:
+            import music21.common.types
 
         controller = context.tasker.controller
 

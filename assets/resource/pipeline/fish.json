@@ -10,9 +10,9 @@
       "recognition": {
          "type": "FeatureMatch",
          "param": {
-            "roi": [904, 610, 318, 100],
-            "template": "fish/初始按钮排.png",
-            "ratio": 0.8
+            "roi": [1144, 606, 84, 96],
+            "template": "fish/钓鱼按钮.png",
+            "ratio": 0.86
          }
       },
       "action": {
