@@ -8,14 +8,20 @@
 
 ## 下载与使用
 
+### 下载
+
+在 [Release](https://github.com/op200/NTEToolbox/releases) 中下载最新版本的压缩包
+
+解压后即可使用
+
 ### GUI
 
 目前会自动打包 MFAA 和 MXU 两种 GUI，觉得哪个好用就用哪个
 
 * #### MFAA
 
-  启动时会自动判断 dotnet 和 c++ 运行时  
-  若电脑中没有对应运行时，需按提示在微软官网下载
+  启动时会自动判断 [.NET](https://dotnet.microsoft.com) 和 [C++](https://learn.microsoft.com/zh-cn/windows/latest-supported-vc-redist) 运行时  
+  若电脑中没有对应运行时，需按 GUI 给出的提示在微软官网下载或 GUI 自动下载
 
 * #### MXU
 
