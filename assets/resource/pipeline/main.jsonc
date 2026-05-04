@@ -1,12 +1,24 @@
 {
    "钓鱼01": {
       "rate_limit": 0,
-      "recognition": "DirectHit",
+      "timeout": 0,
+      "recognition": {
+         "type": "And",
+         "param": {
+            "all_of": ["启动测试"]
+         }
+      },
       "next": "启动钓鱼"
    },
-   "弹钢琴01": {
+   "弹钢琴_keybord": {
       "rate_limit": 0,
-      "recognition": "DirectHit",
-      "next": "启动弹钢琴"
+      "timeout": 0,
+      "recognition": {
+         "type": "And",
+         "param": {
+            "all_of": ["启动测试"]
+         }
+      },
+      "next": "启动弹钢琴_keybord"
    }
 }

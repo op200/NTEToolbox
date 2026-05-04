@@ -4,7 +4,7 @@
    "description": "异环工具箱",
    "license": "AGPLv3",
    "github": "https://github.com/op200/NTEToolbox",
-   "version": "0.2.7",
+   "version": "0.2.8",
    "resource": [
       {
          "name": "默认",
@@ -58,13 +58,13 @@
          "entry": "钓鱼01"
       },
       {
-         "name": "弹钢琴",
-         "entry": "弹钢琴01",
-         "option": ["弹钢琴设置"]
+         "name": "弹钢琴（键盘输入）",
+         "entry": "弹钢琴_keybord",
+         "option": ["弹钢琴_keybord_设置"]
       }
    ],
    "option": {
-      "弹钢琴设置": {
+      "弹钢琴_keybord_设置": {
          "type": "input",
          "inputs": [
             {
@@ -91,7 +91,7 @@
             }
          ],
          "pipeline_override": {
-            "启动弹钢琴": {
+            "启动弹钢琴_keybord": {
                "action": {
                   "param": {
                      "custom_action_param": {

@@ -83,7 +83,7 @@ class Piano_play(CustomAction):
     ) -> bool:
         try:
             import music21
-        except ImportError:
+        except ModuleNotFoundError:
             print("maafw 未安装，执行以下命令以安装或更新: pip install -U maafw")
             sys.exit(Exit_code.import_failed.value)
 

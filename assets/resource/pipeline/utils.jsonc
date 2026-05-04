@@ -1,0 +1,9 @@
+{
+   "启动测试": {
+      "rate_limit": 0,
+      "recognition": {
+         "type": "Custom",
+         "param": { "custom_recognition": "启动测试" }
+      }
+   }
+}
