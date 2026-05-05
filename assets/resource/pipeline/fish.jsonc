@@ -66,7 +66,26 @@
             "key": 70 // F
          }
       },
-      "next": ["上鱼", "无饵", "获鱼", "初始状态"]
+      "focus": {
+         "Node.Recognition.Failed": "{name} 识别失败"
+      },
+      "next": ["上鱼", "满舱", "无饵", "获鱼", "初始状态"]
+   },
+   "满舱": {
+      "rate_limit": 100,
+      "recognition": {
+         "type": "OCR",
+         "param": {
+            "roi": [420, 342, 440, 36],
+            "expected": "鱼舱中渔获已满.*请出售一些渔获再尝试"
+         }
+      },
+      "focus": {
+         "Node.Recognition.Succeeded": {
+            "content": "钓鱼结束: 渔获已满",
+            "display": ["log", "notification"]
+         }
+      }
    },
    "无饵": {
       "rate_limit": 100,
@@ -78,7 +97,7 @@
          }
       },
       "focus": {
-         "Node.Action.Succeeded": {
+         "Node.Recognition.Succeeded": {
             "content": "钓鱼结束: 鱼饵用完",
             "display": ["log", "notification"]
          }

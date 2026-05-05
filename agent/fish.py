@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, override
 from maa.agent.agent_server import AgentServer
 from maa.custom_action import CustomAction
 
+from .virtual_key import Win_virtual_key
+
 if TYPE_CHECKING:
     from maa.context import Context
 
@@ -102,9 +104,9 @@ class Fish_溜鱼(CustomAction):
                 continue
 
             key = (
-                0x41  # A
+                Win_virtual_key.A.value.code
                 if diff < 0
-                else 0x44  # D
+                else Win_virtual_key.D.value.code
             )
             controller.post_key_down(key).wait()
             time.sleep(diff_abs / 200)

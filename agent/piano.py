@@ -12,6 +12,7 @@ from maa.agent.agent_server import AgentServer
 from maa.custom_action import CustomAction
 
 from .global_val import Exit_code
+from .virtual_key import Win_virtual_key
 
 if TYPE_CHECKING:
     from maa.context import Context
@@ -19,14 +20,6 @@ if TYPE_CHECKING:
 
 type Key_name = Literal["Z", "X", "C", "V", "B", "N", "M","A", "S", "D", "F", "G", "H", "J", "Q", "W", "E", "R", "T", "Y", "U"]  # fmt: off
 
-KN__CODE: Final[dict[Key_name, int]] = {
-    # 低音 Z-M
-    **{"Z": 0x5A, "X": 0x58, "C": 0x43, "V": 0x56, "B": 0x42, "N": 0x4E, "M": 0x4D},  # noqa: PIE800
-    # 中音 A-J
-    **{"A": 0x41, "S": 0x53, "D": 0x44, "F": 0x46, "G": 0x47, "H": 0x48, "J": 0x4A},  # noqa: PIE800
-    # 高音 Q-U
-    **{"Q": 0x51, "W": 0x57, "E": 0x45, "R": 0x52, "T": 0x54, "Y": 0x59, "U": 0x55},  # noqa: PIE800
-}
 
 LOW_PITCH_OVERFLOW_LINE, HIGH_PITCH_OVERFLOW_LINE = 59, 96
 
@@ -127,16 +120,16 @@ class Piano_play(CustomAction):
                 code=code,
             )
             for kn, midi in DEFAULT_KN__MIDI.items()
-            if (code := KN__CODE[kn])
+            if (code := Win_virtual_key[kn].value.code)
         }
 
         if piano_mode == "36":
             midi__key_ctrl = {
-                midi: Key(mode=Key.Mode.only_ctrl, code=KN__CODE[kn])
+                midi: Key(mode=Key.Mode.only_ctrl, code=Win_virtual_key[kn].value.code)
                 for kn, midi in CTRL_CHANGE_KN__MIDI.items()
             }
             midi__key_shift = {
-                midi: Key(mode=Key.Mode.only_shift, code=KN__CODE[kn])
+                midi: Key(mode=Key.Mode.only_shift, code=Win_virtual_key[kn].value.code)
                 for kn, midi in SHIFT_CHANGE_KN__MIDI.items()
             }
             midi__key |= midi__key_ctrl | midi__key_shift
