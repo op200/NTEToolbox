@@ -4,7 +4,7 @@
    "description": "异环工具箱",
    "license": "AGPLv3",
    "github": "https://github.com/op200/NTEToolbox",
-   "version": "0.2.8",
+   "version": "0.2.9",
    "resource": [
       {
          "name": "默认",
@@ -22,7 +22,7 @@
          "permission_required": true,
          "win32": {
             "class_regex": "UnrealWindow",
-            "window_regex": "^\\s*异环\\s*$",
+            "window_regex": "^\\s*(异环|NTE)\\s*$",
             "screencap": "FramePool",
             "mouse": "PostMessage",
             "keyboard": "PostMessage"
@@ -34,9 +34,9 @@
          "permission_required": true,
          "win32": {
             "class_regex": "UnrealWindow",
-            "window_regex": "^\\s*异环\\s*$",
+            "window_regex": "^\\s*(异环|NTE)\\s*$",
             "screencap": "FramePool",
-            "mouse": "PostMessageWithWindowPos",
+            "mouse": "PostMessageWithCursorPos",
             "keyboard": "PostMessageWithWindowPos"
          }
       },
@@ -45,7 +45,7 @@
          "type": "Win32",
          "win32": {
             "class_regex": "UnrealWindow",
-            "window_regex": "^\\s*异环\\s*$",
+            "window_regex": "^\\s*(异环|NTE)\\s*$",
             "screencap": "FramePool",
             "mouse": "Seize",
             "keyboard": "Seize"
@@ -55,7 +55,8 @@
    "task": [
       {
          "name": "钓鱼",
-         "entry": "钓鱼01"
+         "entry": "钓鱼01",
+         "option": ["钓鱼设置"]
       },
       {
          "name": "弹钢琴（键盘输入）",
@@ -64,12 +65,41 @@
       }
    ],
    "option": {
+      "钓鱼设置": {
+         "type": "input",
+         "inputs": [
+            {
+               "name": "溜鱼_midpoint_pix_range",
+               "label": "溜鱼中点停顿范围（pix）",
+               "pipeline_type": "int",
+               "default": "5"
+            },
+            {
+               "name": "溜鱼_midpoint_sleep_time",
+               "label": "溜鱼中点停顿时间（ms）",
+               "pipeline_type": "int",
+               "default": "5"
+            }
+         ],
+         "pipeline_override": {
+            "溜鱼": {
+               "action": {
+                  "param": {
+                     "custom_action_param": {
+                        "溜鱼_midpoint_pix_range": "{溜鱼_midpoint_pix_range}",
+                        "溜鱼_midpoint_sleep_time": "{溜鱼_midpoint_sleep_time}"
+                     }
+                  }
+               }
+            }
+         }
+      },
       "弹钢琴_keybord_设置": {
          "type": "input",
          "inputs": [
             {
                "name": "midi_path",
-               "label": "midi 文件路径",
+               "label": "MIDI 文件路径",
                "pipeline_type": "string"
             },
             {

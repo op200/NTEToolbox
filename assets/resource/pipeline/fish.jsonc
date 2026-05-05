@@ -58,7 +58,8 @@
       "action": {
          "type": "Custom",
          "param": {
-            "custom_action": "fish_溜鱼"
+            "custom_action": "fish_溜鱼",
+            "custom_action_param": null // option 覆写
          }
       },
       "next": ["获鱼", "初始状态", "溜鱼"]

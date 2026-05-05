@@ -1,3 +1,4 @@
+import json
 import time
 from typing import TYPE_CHECKING, override
 
@@ -20,6 +21,26 @@ class Fish_溜鱼(CustomAction):
         argv: CustomAction.RunArg,
     ) -> bool:
         controller = context.tasker.controller
+
+        param = json.loads(argv.custom_action_param)
+        assert isinstance(param, dict)
+
+        try:
+            溜鱼_midpoint_pix_range = param.get("溜鱼_midpoint_pix_range")
+            溜鱼_midpoint_sleep_time = param.get("溜鱼_midpoint_sleep_time")
+            if 溜鱼_midpoint_pix_range is None or 溜鱼_midpoint_sleep_time is None:
+                raise ValueError("必须填值")
+            溜鱼_midpoint_pix_range, 溜鱼_midpoint_sleep_time = (
+                int(溜鱼_midpoint_pix_range),
+                int(溜鱼_midpoint_sleep_time),
+            )
+            if not 0 < 溜鱼_midpoint_pix_range < 50:
+                raise ValueError("溜鱼_midpoint_pix_range 值范围不正常")
+            if not 0 <= 溜鱼_midpoint_sleep_time < 200:
+                raise ValueError("溜鱼_midpoint_sleep_time 值范围不正常")
+        except Exception as e:
+            print(f"选项初始化错误: {e} {e!r}")
+            return False
 
         for _ in range(MAX_RANGE):
             img = controller.post_screencap().get(wait=True)
@@ -76,8 +97,8 @@ class Fish_溜鱼(CustomAction):
             yellow_x = ybox.x + ybox.w / 2
             diff = green_x - yellow_x
 
-            if (diff_abs := abs(diff)) < 5:
-                time.sleep(0.005)
+            if (diff_abs := abs(diff)) < 溜鱼_midpoint_pix_range:
+                time.sleep(溜鱼_midpoint_sleep_time / 1000)
                 continue
 
             key = (
