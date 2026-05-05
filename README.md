@@ -8,6 +8,8 @@
 
 ## 下载与使用
 
+*完整看完下列说明再开始操作*
+
 ### 下载
 
 在 [Release](https://github.com/op200/NTEToolbox/releases) 中下载最新版本的压缩包
