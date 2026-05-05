@@ -8,7 +8,8 @@
 
 ## 下载与使用
 
-*完整看完下列说明再开始操作*
+> [!IMPORTANT]
+> 完整看完下列说明再开始操作
 
 ### 下载
 
@@ -28,7 +29,8 @@
 * #### MXU
 
   体积小，执行效率也比 MFAA 高  
-  如果觉得 MFAA 钓鱼时溜鱼跟随不及时，最好换用这个 GUI
+  如果觉得 MFAA 钓鱼时溜鱼跟随不及时，最好换用这个 GUI  
+  （这个 GUI 没有检查更新功能）
 
 ### 启动
 
@@ -43,7 +45,7 @@
 依赖 Python，自行安装 [Python 3.14](https://www.python.org/downloads/release/python-3144/) 或更高版本，Windows 用户安装时记得勾选添加到 PATH
 
 需要安装 Python 包 `maafw`  
-（安装并更新命令: `pip install -U maafw`）
+（安装并更新命令: `python -m pip install -U maafw`）
 
 *如果发现 GUI 中任务执行到一半直接失败，那么大概是调用 Python 失败*
 
@@ -60,4 +62,4 @@
 游戏内先打开钢琴界面，GUI 选项中输入 MIDI 文件的路径，会读取第一个乐器，自动弹钢琴
 
 解码 MIDI 文件依赖 [music21](https://github.com/cuthbertLab/music21)  
-（安装并更新命令: `pip install -U music21`）
+（安装并更新命令: `python -m pip install -U music21`）

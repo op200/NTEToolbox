@@ -6,13 +6,58 @@
    },
    "初始状态": {
       "rate_limit": 400,
-      // 有按钮就按 F
+      // 识别到就按 F
       "recognition": {
-         "type": "FeatureMatch",
+         "type": "Or",
          "param": {
-            "roi": [1144, 606, 84, 96],
-            "template": "fish/钓鱼按钮.png",
-            "ratio": 0.86
+            "any_of": [
+               {
+                  "recognition": {
+                     "type": "FeatureMatch",
+                     "param": {
+                        "roi": [1144, 606, 84, 96],
+                        "template": "fish/钓鱼按钮.png",
+                        "ratio": 0.88
+                     }
+                  }
+               },
+               {
+                  "recognition": {
+                     "type": "OCR",
+                     "param": {
+                        "roi": [1170, 674, 30, 26],
+                        "expected": "F"
+                     }
+                  }
+               },
+               {
+                  "recognition": {
+                     "type": "OCR",
+                     "param": {
+                        "roi": [1078, 674, 30, 26],
+                        "expected": "E"
+                     }
+                  }
+               },
+               {
+                  "recognition": {
+                     "type": "OCR",
+                     "param": {
+                        "roi": [996, 674, 30, 26],
+                        "expected": "Q"
+                     }
+                  }
+               },
+               {
+                  "recognition": {
+                     "type": "OCR",
+                     "param": {
+                        "roi": [922, 674, 30, 26],
+                        "expected": "R"
+                     }
+                  }
+               }
+            ]
          }
       },
       "action": {
