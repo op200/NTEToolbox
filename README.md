@@ -42,12 +42,20 @@
 
 ### 依赖
 
-依赖 Python，自行安装 [Python 3.14](https://www.python.org/downloads/release/python-3144/) 或更高版本，Windows 用户安装时记得勾选添加到 PATH
+依赖 Python，自行[安装 Python](https://www.python.org/downloads/) 3.14 或更高版本，Windows 用户安装时记得勾选添加到 PATH
 
 需要安装 Python 包 `maafw`  
 （安装并更新命令: `python -m pip install -U maafw`）
 
 *如果发现 GUI 中任务执行到一半直接失败，那么大概是调用 Python 失败*
+
+### 配置
+
+* #### 日志
+
+  如果觉得 debug 文件夹体积太大，浪费硬盘，可在 `config/maa_option.json` 中将 `logging` 设为 `false` 即可关闭日志
+
+  提交 issue 仍需要提交日志，所以遇到 bug 时需要打开日志，最好将 `draw_quality` 设为 `100` 以提交更清晰的截图
 
 ## 功能
 
