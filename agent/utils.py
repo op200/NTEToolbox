@@ -20,6 +20,8 @@ class Adswq(CustomRecognition):
     ) -> RectType | CustomRecognition.AnalyzeResult | None:
         controller = context.tasker.controller
 
+        success: bool = True
+
         img: np.typing.NDArray = controller.post_screencap().get(wait=True)
 
         h, w = img.shape[:2]
@@ -27,8 +29,12 @@ class Adswq(CustomRecognition):
             print(
                 f"分辨率非 {DEFAULT_RESOLUTION[0]} x {DEFAULT_RESOLUTION[1]}: {w} x {h}"
             )
+            success = False
         if w * 9 != h * 16:
             print(f"分辨率 {w} x {h} 不是 16:9")
+            success = False
+
+        if success is False:
             return None
 
         return [0, 0, w, h]
