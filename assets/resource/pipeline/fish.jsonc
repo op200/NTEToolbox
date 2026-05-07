@@ -5,7 +5,7 @@
       "next": ["上鱼", "无饵", "获鱼", "初始状态"]
    },
    "初始状态": {
-      "rate_limit": 400,
+      "rate_limit": 300,
       // 识别到就按 F
       "recognition": {
          "type": "Or",
@@ -25,35 +25,8 @@
                   "recognition": {
                      "type": "OCR",
                      "param": {
-                        "roi": [1170, 674, 30, 26],
-                        "expected": "F"
-                     }
-                  }
-               },
-               {
-                  "recognition": {
-                     "type": "OCR",
-                     "param": {
-                        "roi": [1078, 674, 30, 26],
-                        "expected": "E"
-                     }
-                  }
-               },
-               {
-                  "recognition": {
-                     "type": "OCR",
-                     "param": {
-                        "roi": [996, 674, 30, 26],
-                        "expected": "Q"
-                     }
-                  }
-               },
-               {
-                  "recognition": {
-                     "type": "OCR",
-                     "param": {
-                        "roi": [922, 674, 30, 26],
-                        "expected": "R"
+                        "roi": [900, 670, 320, 32],
+                        "expected": ["R", "Q", "E", "F"]
                      }
                   }
                }
@@ -101,7 +74,7 @@
       }
    },
    "上鱼": {
-      "rate_limit": 200,
+      "rate_limit": 50,
       "recognition": {
          "type": "OCR",
          "param": {
@@ -113,7 +86,6 @@
    },
    "溜鱼": {
       "rate_limit": 200,
-      "timeout": 6000,
       "on_error": "启动钓鱼",
       "recognition": "DirectHit",
       "action": {

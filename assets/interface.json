@@ -4,7 +4,7 @@
    "description": "异环工具箱",
    "license": "AGPLv3",
    "github": "https://github.com/op200/NTEToolbox",
-   "version": "0.2.12",
+   "version": "0.2.13",
    "resource": [
       {
          "name": "默认",
@@ -17,7 +17,7 @@
    },
    "controller": [
       {
-         "name": "桌面端_PostMessage（默认）",
+         "name": "Win PostMessage (默认)",
          "type": "Win32",
          "permission_required": true,
          "win32": {
@@ -29,7 +29,7 @@
          }
       },
       {
-         "name": "桌面端_PostMessageWithWindowPos",
+         "name": "Win PostMessageWithWindowPos",
          "type": "Win32",
          "permission_required": true,
          "win32": {
@@ -41,7 +41,7 @@
          }
       },
       {
-         "name": "桌面端_Seize",
+         "name": "Win Seize",
          "type": "Win32",
          "win32": {
             "class_regex": "UnrealWindow",
@@ -50,6 +50,19 @@
             "mouse": "Seize",
             "keyboard": "Seize"
          }
+      },
+      {
+         "name": "Mac",
+         "type": "MacOS",
+         "macos": {
+            "title_regex": "^\\s*(异环|NTE)\\s*$",
+            "screencap": "ScreenCaptureKit",
+            "input": "PostToPid"
+         }
+      },
+      {
+         "name": "ADB",
+         "type": "Adb"
       }
    ],
    "task": [
