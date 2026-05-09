@@ -1,7 +1,15 @@
-name: 其他议题（使用中文）
+name: 其他议题
 description: 提问等应去 discussions 创建讨论，而不是创建 issue
 labels: ["question"]
 body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 确保理解以下内容后再开始填写 issue
+      options:
+        - label: 我知道 提问等应去 discussions 创建讨论，而不是创建 issue
+          required: true
+
   - type: textarea
     id: describe
     attributes:
