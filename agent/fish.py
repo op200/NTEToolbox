@@ -77,6 +77,7 @@ class Fish_溜鱼(CustomAction):
             gbox = greem_reco_detail.box
             if gbox is None:
                 # print("识别不到绿色")
+                time.sleep(2)  # 等待弹出获鱼界面
                 return True
 
             yellow_reco_detail = context.run_recognition(
@@ -101,6 +102,7 @@ class Fish_溜鱼(CustomAction):
             ybox = yellow_reco_detail.box
             if ybox is None:
                 # print("识别不到黄色")
+                time.sleep(2)  # 等待弹出获鱼界面
                 return True
 
             green_x = gbox.x + gbox.w / 2
