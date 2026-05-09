@@ -1,4 +1,4 @@
-name: 提问
+name: 其他议题（使用中文）
 description: 提问等应去 discussions 创建讨论，而不是创建 issue
 labels: ["question"]
 body:
