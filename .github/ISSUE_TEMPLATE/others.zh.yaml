@@ -5,6 +5,6 @@ body:
   - type: textarea
     id: describe
     attributes:
-      label: 说说你遇到的问题？
+      label: 描述问题
     validations:
       required: false
