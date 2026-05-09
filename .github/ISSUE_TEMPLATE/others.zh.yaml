@@ -1,5 +1,5 @@
-name: 其他议题（使用中文）
-description: 提出问题，而不是 Bug 反馈或需求建议
+name: 提问
+description: 提问等应去 discussions 创建讨论，而不是创建 issue
 labels: ["question"]
 body:
   - type: textarea
