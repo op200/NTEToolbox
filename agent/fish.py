@@ -159,20 +159,16 @@ class Fish_卖鱼_and_买换饵(CustomAction):
             lambda: controller.post_click(100, 280),  # 归流鱼舱
             lambda: controller.post_click(710, 645),  # 一键出售
             lambda: controller.post_click(780, 470),  # 确认
+            lambda: controller.post_click(640, 640),  # 点击空白
             lambda: controller.post_click_key(Win_virtual_key.VK_ESCAPE.value.code),
-            lambda: (  # 若鱼舱无鱼，则少执行一次 ESC
-                Empty_job()
-                if 检测初始状态()
-                else controller.post_click_key(Win_virtual_key.VK_ESCAPE.value.code)
-            ),
         ):
             action().wait()
-            time.sleep(2)
+            time.sleep(1.5)
         # endregion
 
         # region: 商店界面
         controller.post_click_key(Win_virtual_key.R.value.code).wait()
-        time.sleep(2)
+        time.sleep(1.5)
         匹配万能鱼饵_reco_detail = context.run_recognition(
             "匹配万能鱼饵",
             _get_img(),
@@ -201,7 +197,7 @@ class Fish_卖鱼_and_买换饵(CustomAction):
                 continue
             if ocr_res.text == "万能鱼饵":
                 controller.post_click(ocr_res.box[0], ocr_res.box[1]).wait()
-                time.sleep(2)
+                time.sleep(1.5)
                 匹配万能鱼饵价格_reco_detail = context.run_recognition(
                     "匹配万能鱼饵价格",
                     _get_img(),
@@ -228,23 +224,20 @@ class Fish_卖鱼_and_买换饵(CustomAction):
                         print("匹配万能鱼饵价格 OCR 结果不是 OCRResult 类型")
                         return False
                     if all_results[0].score > 0.96 and all_results[0].text == "5":
-                        for action in (
-                            lambda: controller.post_click(1218, 636),  # 加满
-                            lambda: controller.post_click(1074, 688),  # 购买
-                            lambda: controller.post_click(774, 476),  # 确认
-                            lambda: controller.post_click_key(
-                                Win_virtual_key.VK_ESCAPE.value.code
-                            ),
-                            lambda: (  # 若购买失败，则少执行一次 ESC
-                                Empty_job()
-                                if 检测初始状态()
-                                else controller.post_click_key(
-                                    Win_virtual_key.VK_ESCAPE.value.code
-                                )
-                            ),
-                        ):
-                            action().wait()
-                            time.sleep(2)
+                        for _ in range(3):  # 买 n * 99 个
+                            for action in (
+                                lambda: controller.post_click(1218, 636),  # 加满
+                                lambda: controller.post_click(1074, 688),  # 购买
+                                lambda: controller.post_click(774, 476),  # 确认
+                                lambda: controller.post_click(640, 540),  # 点击空白
+                            ):
+                                action().wait()
+                                time.sleep(1.5)
+
+                        controller.post_click_key(  # 退出到初始
+                            Win_virtual_key.VK_ESCAPE.value.code
+                        ).wait()
+                        time.sleep(1)
         # endregion
 
         # region: 换饵
@@ -256,7 +249,7 @@ class Fish_卖鱼_and_买换饵(CustomAction):
             lambda: controller.post_click(780, 472),  # 更换
         ):
             action().wait()
-            time.sleep(2)
+            time.sleep(1.5)
         # endregion
 
         return True

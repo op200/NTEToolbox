@@ -5,15 +5,7 @@ import shutil
 import sys
 from pathlib import Path
 
-try:
-    import jsonc
-except ModuleNotFoundError as e:
-    raise ImportError(
-        "Missing dependency 'json-with-comments' (imported as 'jsonc').\n"
-        f"Install it with:\n  {sys.executable} -m pip install json-with-comments\n"
-        "Or add it to your project's requirements."
-    ) from e
-
+import jsonc
 from configure import configure_ocr_model
 
 working_dir: Path = Path(__file__).parent.parent.resolve()
@@ -43,13 +35,6 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-args: argparse.Namespace = parse_args()
-version: str = args.version
-os_name: str = args.os
-arch: str = args.arch
-gui: str = args.gui
-
-
 def get_dotnet_platform_tag() -> str:
     """自动检测当前平台并返回对应的dotnet平台标签"""
     if os_name == "win" and arch == "x86_64":
@@ -70,7 +55,7 @@ def get_dotnet_platform_tag() -> str:
 
 
 def install_deps() -> None:
-    if not (working_dir / "deps" / "bin").exists():
+    if not (working_dir / "deps" / "bin").is_dir():
         print('Please download the MaaFramework to "deps" first.')
         print('请先下载 MaaFramework 到 "deps"。')
         sys.exit(1)
@@ -139,18 +124,29 @@ def install_resource() -> None:
         install_path / "resource",
         dirs_exist_ok=True,
     )
-    shutil.copy2(
-        working_dir / "assets" / "interface.json",
-        install_path,
-    )
 
-    with (install_path / "interface.json").open("r", encoding="utf-8") as f:
-        interface: dict = jsonc.load(f)
+    for interface_filename in ("interface.json", "interface.jsonc"):
+        interface_path_org: Path = working_dir / "assets" / interface_filename
+        if not interface_path_org.is_file():
+            continue
 
-    interface["version"] = version
+        interface_path_new: Path = (
+            install_path / "interface.json"
+        )  # GUI 只能识别到 .json
 
-    with (install_path / "interface.json").open("w", encoding="utf-8") as f:
-        jsonc.dump(interface, f, ensure_ascii=False, indent=4)
+        shutil.copy2(interface_path_org, interface_path_new)
+        if not interface_path_new.is_file():
+            raise RuntimeError(
+                f'复制失败: "{interface_path_org}" -> "{interface_path_new}"'
+            )
+
+        interface: dict = jsonc.loads(interface_path_new.read_text(encoding="utf-8"))
+
+        interface["version"] = version
+
+        interface_path_new.write_text(
+            jsonc.dumps(interface, ensure_ascii=False, indent=3), encoding="utf-8"
+        )
 
 
 def install_chores() -> None:
@@ -173,6 +169,12 @@ def install_agent() -> None:
 
 
 if __name__ == "__main__":
+    args: argparse.Namespace = parse_args()
+    version: str = args.version
+    os_name: str = args.os
+    arch: str = args.arch
+    gui: str = args.gui
+
     install_deps()
     install_resource()
     install_chores()
