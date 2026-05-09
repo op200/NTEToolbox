@@ -1,4 +1,5 @@
-name: 提问等其他问题去 discussions 创建，而不是创建 issue
+name: 提问
+description: 提问等其他问题去 discussions 创建，而不是创建 issue
 labels: ["question"]
 body:
   - type: textarea
