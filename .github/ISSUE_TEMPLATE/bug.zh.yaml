@@ -1,0 +1,79 @@
+name: Bug 反馈
+description: 识别错误、操作异常、连接错误等
+labels: ["bug"]
+body:
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 确保理解以下内容后再开始填写 issue
+      description: 完整阅读，否则你提交的内容可能对开发者没有帮助
+      options:
+        - label: 我知道 issue 是用于反馈和解决问题的，而非吐槽评论区
+          required: true
+        - label: issue 标题简洁明了，概括问题大纲
+          required: true
+        - label: 我使用的是最新版本，开发者不会也不应该解决旧版本发生的问题
+          required: true
+        - label: 我已使用搜索功能确认了没有其他 issue、pr、讨论、release 等 (包括已关闭的 issue、pr) 提及过本问题，如果有重复问题，应当在对应的位置发布，而不是新建 issue
+          required: true
+
+  - type: textarea
+    id: version
+    attributes:
+      label: 版本信息
+      description: 提供你使用的版本信息，如果问题涉及 Python 等依赖，你需要提供所有依赖的信息
+    validations:
+      required: true
+
+  - type: textarea
+    id: describe
+    attributes:
+      label: 问题描述
+      description: |
+        尽可能详细描述每个环节做了什么、发生了什么、结果怎样，不要错过细节
+        *按粘贴键可以直接粘贴图像*
+        **由于开发者可能无法到达某些环节，所以需要提供所有涉及问题的环节的截图**
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志和配置文件
+      description: |
+        **请在关闭程序后，上传以下日志文件 (重复启动程序可能会导致日志文件被自动清除)**
+        1. `debug` 文件夹中的 `maa.log` `maa.bak.log` 日志文件，并说明问题出现的大致时间点
+        2. `config` 文件夹中是全局配置文件，如果涉及非 task 级别或 GUI 特有的功能，则需要上传该配置文件
+
+        如果你在使用 MacBook，请点击屏幕左上角的“文件”，点击“打开日志文件夹”
+        **请直接将完整的文件拖拽进来，而非自己裁切或复制的片段；若文件体积过大可压缩后再上传**
+    validations:
+      required: true
+
+  - type: textarea
+    id: configuration
+    attributes:
+      label: 配置信息
+      description: |
+        请说明操作系统及版本、模拟器品牌、模拟器分辨率、DPI、帧率；
+        若正在使用 MuMu 12 或雷电 9，请说明截图增强是否开启；
+        最后请说明 GPU 加速推理是否开启，若开启请提供 GPU 型号。
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图或录屏
+      description: |
+        `debug` 目录下按功能分类的文件夹内，有一些自动截图的错误图片，若有相关的，请传到 issue
+        如果 bug 极其复杂，需要录屏，请使用 OBS 的窗口录制，将游戏窗口调为 1280x720，这样录制的视频就是标准分辨率
+    validations:
+      required: false
+
+  - type: textarea
+    id: others
+    attributes:
+      label: 补充说明
+    validations:
+      required: false
