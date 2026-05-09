@@ -1,2 +1,39 @@
+[build-system]
+requires = [
+    "setuptools>=82",
+]
+
 [project]
+authors = [{ name = "op200" }]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows :: Windows 10",
+    "Operating System :: Microsoft :: Windows :: Windows 11",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
+]
+dependencies = [
+    "maafw>=5.10.4",
+    "music21>=9.9.1",
+]
+dynamic = ["version"]
+license = "AGPL-3.0-or-later"
+name = "ntetoolbox"
+readme = "README.md"
 requires-python = ">=3.14"
+
+[project.urls]
+Homepage = "https://github.com/op200/NTEToolbox"
+Source   = "https://github.com/op200/NTEToolbox"
+
+[tool.setuptools]
+packages = ["agent"]
+
+[tool.setuptools.dynamic]
+version = { attr = "agent.__version__" }
+
+[tool.setuptools.package-data]
+ntetoolbox = ["assets/**/*"]

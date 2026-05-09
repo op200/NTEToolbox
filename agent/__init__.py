@@ -19,3 +19,5 @@ __all__ = [
     "piano",
     "utils",
 ]
+
+__version__ = utils.get_project_version() or "0.0.0"

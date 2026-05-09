@@ -1,17 +1,25 @@
+import functools
 import json
 import time
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, Self, override
 
 from maa.agent.agent_server import AgentServer
 from maa.custom_action import CustomAction
+from maa.define import OCRResult
 
 from .virtual_key import Win_virtual_key
 
 if TYPE_CHECKING:
+    import numpy as np
     from maa.context import Context
+    from maa.controller import Controller
 
 MAX_RANGE = 120
 GY_ROI = [404, 44, 478, 12]
+
+
+def get_img(controller: Controller) -> np.typing.NDArray:
+    return controller.post_screencap().get(wait=True)
 
 
 @AgentServer.custom_action("fish_溜鱼")
@@ -45,7 +53,7 @@ class Fish_溜鱼(CustomAction):
             return False
 
         for _ in range(MAX_RANGE):
-            img = controller.post_screencap().get(wait=True)
+            img: np.typing.NDArray = get_img(controller)
 
             greem_reco_detail = context.run_recognition(
                 "匹配绿色",
@@ -109,8 +117,144 @@ class Fish_溜鱼(CustomAction):
                 else Win_virtual_key.D.value.code
             )
             controller.post_key_down(key).wait()
-            time.sleep(diff_abs / 200)
+            time.sleep((diff_abs + max(0, 溜鱼_midpoint_pix_range / 2 - 1)) / 200)
             controller.post_key_up(key).wait()
 
         print(f"溜鱼超出 {MAX_RANGE} 次循环")
+        return True
+
+
+@AgentServer.custom_action("fish_卖鱼_and_买换饵")
+class Fish_卖鱼_and_买换饵(CustomAction):
+    @override
+    def run(
+        self,
+        context: Context,
+        argv: CustomAction.RunArg,
+    ) -> bool:
+        controller = context.tasker.controller
+
+        _get_img = functools.partial(get_img, controller=controller)
+
+        def 检测初始状态() -> bool:
+            初始状态_reco_detail = context.run_recognition("初始状态", _get_img())
+            if 初始状态_reco_detail is None:
+                print(f"{Fish_卖鱼_and_买换饵.__name__} 初始状态 识别错误")
+                return False
+            return 初始状态_reco_detail.box is not None
+
+        class Empty_job:
+            def wait(self) -> Self:
+                return self
+
+        if 检测初始状态() is False:
+            print(f"{Fish_卖鱼_and_买换饵.__name__} 初始状态 识别不到")
+            return False
+
+        # region: 市场界面
+        for action in (
+            lambda: controller.post_click_key(Win_virtual_key.Q.value.code),
+            lambda: controller.post_click(100, 280),  # 归流鱼舱
+            lambda: controller.post_click(710, 645),  # 一键出售
+            lambda: controller.post_click(780, 470),  # 确认
+            lambda: controller.post_click_key(Win_virtual_key.VK_ESCAPE.value.code),
+            lambda: (  # 若鱼舱无鱼，则少执行一次 ESC
+                Empty_job()
+                if 检测初始状态()
+                else controller.post_click_key(Win_virtual_key.VK_ESCAPE.value.code)
+            ),
+        ):
+            action().wait()
+            time.sleep(2)
+        # endregion
+
+        # region: 商店界面
+        controller.post_click_key(Win_virtual_key.R.value.code).wait()
+        time.sleep(2)
+        匹配万能鱼饵_reco_detail = context.run_recognition(
+            "匹配万能鱼饵",
+            _get_img(),
+            pipeline_override={
+                "匹配万能鱼饵": {
+                    "recognition": {
+                        "type": "OCR",
+                        "param": {
+                            "roi": [19, 71, 460, 610],
+                        },
+                    }
+                }
+            },
+        )
+        if 匹配万能鱼饵_reco_detail is None:
+            print(f"{Fish_卖鱼_and_买换饵.__name__} 匹配万能鱼饵 识别错误")
+            return False
+        if 匹配万能鱼饵_reco_detail.box is None:
+            print(f"{Fish_卖鱼_and_买换饵.__name__} 匹配万能鱼饵 识别不到")
+            return False
+        for ocr_res in 匹配万能鱼饵_reco_detail.all_results:
+            if not isinstance(ocr_res, OCRResult):
+                print("匹配万能鱼饵 OCR 结果不是 OCRResult 类型")
+                return False
+            if ocr_res.score < 0.9:
+                continue
+            if ocr_res.text == "万能鱼饵":
+                controller.post_click(ocr_res.box[0], ocr_res.box[1]).wait()
+                time.sleep(2)
+                匹配万能鱼饵价格_reco_detail = context.run_recognition(
+                    "匹配万能鱼饵价格",
+                    _get_img(),
+                    pipeline_override={
+                        "匹配万能鱼饵价格": {
+                            "recognition": {
+                                "type": "OCR",
+                                "param": {
+                                    "roi": [1162, 577, 31, 31],
+                                },
+                            }
+                        }
+                    },
+                )
+                if 匹配万能鱼饵价格_reco_detail is None:
+                    print(f"{Fish_卖鱼_and_买换饵.__name__} 匹配万能鱼饵价格 识别错误")
+                    return False
+                if 匹配万能鱼饵价格_reco_detail.box is None:
+                    print(f"{Fish_卖鱼_and_买换饵.__name__} 匹配万能鱼饵价格 识别不到")
+                    return False
+                all_results = 匹配万能鱼饵价格_reco_detail.all_results
+                if len(all_results) == 1:
+                    if not isinstance(all_results[0], OCRResult):
+                        print("匹配万能鱼饵价格 OCR 结果不是 OCRResult 类型")
+                        return False
+                    if all_results[0].score > 0.96 and all_results[0].text == "5":
+                        for action in (
+                            lambda: controller.post_click(1218, 636),  # 加满
+                            lambda: controller.post_click(1074, 688),  # 购买
+                            lambda: controller.post_click(774, 476),  # 确认
+                            lambda: controller.post_click_key(
+                                Win_virtual_key.VK_ESCAPE.value.code
+                            ),
+                            lambda: (  # 若购买失败，则少执行一次 ESC
+                                Empty_job()
+                                if 检测初始状态()
+                                else controller.post_click_key(
+                                    Win_virtual_key.VK_ESCAPE.value.code
+                                )
+                            ),
+                        ):
+                            action().wait()
+                            time.sleep(2)
+        # endregion
+
+        # region: 换饵
+        for action in (
+            lambda: controller.post_click_key(Win_virtual_key.E.value.code),
+            lambda: controller.post_click(496, 360),
+            lambda: controller.post_click(496, 360),  # 点两次，无论如何都会进详细页面
+            lambda: controller.post_click_key(Win_virtual_key.VK_ESCAPE.value.code),
+            lambda: controller.post_click(780, 472),  # 更换
+        ):
+            action().wait()
+            time.sleep(2)
+        # endregion
+
         return True

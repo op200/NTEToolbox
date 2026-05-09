@@ -4,7 +4,7 @@
    "description": "异环工具箱",
    "license": "AGPLv3",
    "github": "https://github.com/op200/NTEToolbox",
-   "version": "0.2.13",
+   "version": "0.3.0",
    "resource": [
       {
          "name": "默认",
@@ -24,7 +24,7 @@
             "class_regex": "UnrealWindow",
             "window_regex": "^\\s*(异环|NTE)\\s*$",
             "screencap": "FramePool",
-            "mouse": "PostMessage",
+            "mouse": "Seize",
             "keyboard": "PostMessage"
          }
       },
@@ -36,7 +36,7 @@
             "class_regex": "UnrealWindow",
             "window_regex": "^\\s*(异环|NTE)\\s*$",
             "screencap": "FramePool",
-            "mouse": "PostMessageWithCursorPos",
+            "mouse": "Seize",
             "keyboard": "PostMessageWithWindowPos"
          }
       },
@@ -69,7 +69,7 @@
       {
          "name": "钓鱼",
          "entry": "钓鱼01",
-         "option": ["钓鱼设置"]
+         "option": ["溜鱼设置", "卖鱼买换饵设置"]
       },
       {
          "name": "弹钢琴（键盘输入）",
@@ -78,7 +78,7 @@
       }
    ],
    "option": {
-      "钓鱼设置": {
+      "溜鱼设置": {
          "type": "input",
          "inputs": [
             {
@@ -106,6 +106,36 @@
                }
             }
          }
+      },
+      "卖鱼买换饵设置": {
+         "type": "switch",
+         "label": "自动卖鱼买换饵 (抢占鼠标)",
+         "description": "无饵或满舱时，按顺序执行 卖鱼 买饵 换饵。由于涉及点击操作，会抢占鼠标",
+         "cases": [
+            { "name": "Yes" },
+            {
+               "name": "No",
+               "pipeline_override": {
+                  "满舱": {
+                     "focus": {
+                        "Node.Recognition.Succeeded": {
+                           "content": "钓鱼结束: 渔获已满"
+                        }
+                     },
+                     "next": []
+                  },
+                  "无饵": {
+                     "focus": {
+                        "Node.Recognition.Succeeded": {
+                           "content": "钓鱼结束: 鱼饵用完"
+                        }
+                     },
+                     "next": []
+                  }
+               }
+            }
+         ],
+         "default_case": "No"
       },
       "弹钢琴_keybord_设置": {
          "type": "input",

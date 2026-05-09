@@ -52,10 +52,11 @@
       },
       "focus": {
          "Node.Recognition.Succeeded": {
-            "content": "钓鱼结束: 渔获已满",
+            "content": "渔获已满",
             "display": ["log", "notification"]
          }
-      }
+      },
+      "next": "卖鱼买换饵"
    },
    "无饵": {
       "rate_limit": 100,
@@ -68,10 +69,11 @@
       },
       "focus": {
          "Node.Recognition.Succeeded": {
-            "content": "钓鱼结束: 鱼饵用完",
+            "content": "鱼饵用完",
             "display": ["log", "notification"]
          }
-      }
+      },
+      "next": "卖鱼买换饵"
    },
    "上鱼": {
       "rate_limit": 50,
@@ -110,6 +112,15 @@
          "type": "ClickKey",
          "param": {
             "key": 27 // ESC
+         }
+      },
+      "next": "初始状态"
+   },
+   "卖鱼买换饵": {
+      "action": {
+         "type": "Custom",
+         "param": {
+            "custom_action": "fish_卖鱼_and_买换饵"
          }
       },
       "next": "初始状态"
