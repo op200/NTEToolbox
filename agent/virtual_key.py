@@ -1,5 +1,14 @@
+import contextlib
+import ctypes
 import enum
+from ctypes import wintypes
 from dataclasses import dataclass
+from types import TracebackType
+from typing import TYPE_CHECKING, Literal, Self, override
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from types import TracebackType
 
 
 class Win_virtual_key(enum.Enum):
@@ -238,3 +247,209 @@ class Win_virtual_key(enum.Enum):
     VK_NONAME = Value(0xFC, "Reserved")
     VK_PA1 = Value(0xFD, "PA1 key")
     VK_OEM_CLEAR = Value(0xFE, "Clear key")
+
+    class Msg(contextlib.AbstractContextManager):
+        def __init__(
+            self,
+            hwnd: wintypes.HWND | int,
+            keys: Iterable[Win_virtual_key | int] = (),
+            /,
+            api: Literal["Send", "Post"] = "Post",
+            force_focus: bool = True,
+        ) -> None:
+            self.hwnd = hwnd
+            self.keys = keys
+            self.api = api
+            self.force_focus = force_focus
+            """focus 相关纯 AI 写的"""
+
+            self._user32 = ctypes.windll.user32
+            self._kernel32 = ctypes.windll.kernel32  # 附加线程需要
+
+            # 焦点恢复用
+            self._original_focus = None
+            self._thread_attached = False
+
+        def _force_focus(self) -> None:
+            """AI"""
+            cur_thread = self._kernel32.GetCurrentThreadId()
+
+            # 用 byref 传递一个 wintypes.DWORD 来接收进程 ID
+            process_id = wintypes.DWORD()
+            target_thread = self._user32.GetWindowThreadProcessId(
+                self.hwnd, ctypes.byref(process_id)
+            )
+            if target_thread == 0:
+                raise OSError("GetWindowThreadProcessId failed")
+
+            if cur_thread != target_thread:
+                if not self._user32.AttachThreadInput(cur_thread, target_thread, True):
+                    raise OSError("AttachThreadInput failed")
+                self._thread_attached = True
+
+            self._original_focus = self._user32.GetFocus()
+            self._user32.SetFocus(self.hwnd)
+
+        def _restore_focus(self) -> None:
+            """AI"""
+            if self._original_focus:
+                self._user32.SetFocus(self._original_focus)
+
+            if self._thread_attached:
+                cur_thread = self._kernel32.GetCurrentThreadId()
+                process_id = wintypes.DWORD()
+                target_thread = self._user32.GetWindowThreadProcessId(
+                    self.hwnd, ctypes.byref(process_id)
+                )
+                # target_thread 为 0 时可以不处理（窗口可能已不存在）
+                if target_thread != 0:
+                    self._user32.AttachThreadInput(cur_thread, target_thread, False)
+                self._thread_attached = False
+
+        @override
+        def __enter__(self) -> Self:
+            """进入 with 时按下键"""
+            self.down()
+            return self
+
+        @override
+        def __exit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc_value: BaseException | None,
+            traceback: TracebackType | None,
+        ) -> bool | None:
+            """退出 with 时抬起键"""
+            self.up()
+            return None
+
+        class Post_msg_msg(enum.Enum):
+            WM_KEYDOWN = 0x0100  # 按键按下
+            WM_KEYUP = 0x0101  # 按键释放
+            WM_CHAR = 0x0102  # 字符输入
+            WM_MOUSEMOVE = 0x0200  # 鼠标移动
+            WM_LBUTTONDOWN = 0x0201  # 左键按下
+            WM_LBUTTONUP = 0x0202  # 左键释放
+            WM_CLOSE = 0x0010  # 请求关闭窗口
+
+        def _make_key_lparam(
+            self,
+            vkey: int,
+            is_keyup: bool,
+            repeat: int = 1,
+        ) -> int:
+            """
+            构造键盘消息的 lParam，自动获取真实扫描码并判断扩展键。
+
+            Parameters
+            ----------
+            vkey : int
+                虚拟键码 (VK_*)。用于查表得到物理扫描码，
+                并决定该键是否为扩展键。
+            is_keyup : bool
+                True 表示 WM_KEYUP，False 表示 WM_KEYDOWN。
+            repeat : int
+                重复次数，绝大部分情况为 1。
+
+            Returns
+            -------
+            int
+                32 位 lParam 值。
+
+            """
+            MAPVK_VK_TO_VSC = 0
+            # 获取操作系统记录的物理扫描码（部分键可能返回 0，但通常安全）
+            scan_code = ctypes.windll.user32.MapVirtualKeyW(vkey, MAPVK_VK_TO_VSC)
+
+            # 常见扩展键虚拟键码集合
+            # 这些键必须设置 lParam 第 24 位，否则会被误认为普通键/左修饰键
+            EXTENDED_KEYS = {
+                0x2D,  # VK_INSERT
+                0x2E,  # VK_DELETE
+                0x21,  # VK_PRIOR  (Page Up)
+                0x22,  # VK_NEXT   (Page Down)
+                0x23,  # VK_END
+                0x24,  # VK_HOME
+                0x25,  # VK_LEFT
+                0x26,  # VK_UP
+                0x27,  # VK_RIGHT
+                0x28,  # VK_DOWN
+                0x6F,  # VK_DIVIDE (小键盘 /)
+                0xA3,  # VK_RCONTROL
+                0xA5,  # VK_RMENU   (右 Alt)
+                0x5B,  # VK_LWIN
+                0x5C,  # VK_RWIN
+                0x5D,  # VK_APPS
+                # 以下媒体键在多数键盘上也属于扩展键
+                0xAD,  # VK_VOLUME_MUTE
+                0xAE,  # VK_VOLUME_DOWN
+                0xAF,  # VK_VOLUME_UP
+                0xB0,  # VK_MEDIA_NEXT_TRACK
+                0xB1,  # VK_MEDIA_PREV_TRACK
+                0xB2,  # VK_MEDIA_STOP
+                0xB3,  # VK_MEDIA_PLAY_PAUSE
+                0xA6,  # VK_BROWSER_BACK
+                0xA7,  # VK_BROWSER_FORWARD
+                0xA8,  # VK_BROWSER_REFRESH
+                0xA9,  # VK_BROWSER_STOP
+                0xAA,  # VK_BROWSER_SEARCH
+                0xAB,  # VK_BROWSER_FAVORITES
+                0xAC,  # VK_BROWSER_HOME
+            }
+
+            lparam = repeat & 0xFFFF  # bit 0–15
+            lparam |= (scan_code & 0xFF) << 16  # bit 16–23
+            if vkey in EXTENDED_KEYS:
+                lparam |= 1 << 24  # bit 24: extended key
+            if is_keyup:
+                lparam |= 1 << 30  # bit 30: previous key state (up)
+                lparam |= 1 << 31  # bit 31: transition state (up)
+
+            return lparam
+
+        def _send_msg(
+            self,
+            msg: Post_msg_msg,
+            wparam: int,
+            lparam: int,
+        ) -> bool:
+            """
+            调用 winapi 发送按键消息
+
+            :param msg: 消息 ID
+            :param wparam: 消息附加参数1 - vk code
+            :param lparam: 消息附加参数2 - 使用 make_key_lparam 构造
+            """
+            return (
+                self._user32.PostMessageW
+                if self.api == "Post"
+                else self._user32.SendMessageW
+            )(self.hwnd, msg.value, wparam, lparam)
+
+        def down(self, keys: Iterable[Win_virtual_key | int] | None = None) -> None:
+            """按下 key"""
+            if self.force_focus:
+                self._force_focus()
+            for vk_code in (
+                (key if isinstance(key, int) else key.value.code)
+                for key in (self.keys if keys is None else keys)
+            ):
+                self._send_msg(
+                    self.Post_msg_msg.WM_KEYDOWN,
+                    vk_code,
+                    self._make_key_lparam(vk_code, False),
+                )
+
+        def up(self, keys: Iterable[Win_virtual_key | int] | None = None) -> None:
+            """抬起 key"""
+            for vk_code in (
+                (key if isinstance(key, int) else key.value.code)
+                for key in (self.keys if keys is None else keys)
+            ):
+                self._send_msg(
+                    self.Post_msg_msg.WM_KEYUP,
+                    vk_code,
+                    self._make_key_lparam(vk_code, True),
+                )
+            if self.force_focus:
+                self._restore_focus()

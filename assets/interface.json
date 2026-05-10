@@ -4,7 +4,7 @@
    "description": "异环工具箱",
    "license": "AGPLv3",
    "github": "https://github.com/op200/NTEToolbox",
-   "version": "0.3.1",
+   "version": "1.0.0",
    "resource": [
       {
          "name": "默认",
@@ -72,7 +72,7 @@
          "option": ["溜鱼设置", "卖鱼买换饵设置"]
       },
       {
-         "name": "弹钢琴（键盘输入）",
+         "name": "弹钢琴 (键盘输入)",
          "entry": "弹钢琴_keybord",
          "option": ["弹钢琴_keybord_设置"]
       }
@@ -83,13 +83,13 @@
          "inputs": [
             {
                "name": "溜鱼_midpoint_pix_range",
-               "label": "溜鱼中点停顿范围（pix）",
+               "label": "溜鱼中点停顿范围 (pix)",
                "pipeline_type": "int",
                "default": "5"
             },
             {
                "name": "溜鱼_midpoint_sleep_time",
-               "label": "溜鱼中点停顿时间（ms）",
+               "label": "溜鱼中点停顿时间 (ms)",
                "pipeline_type": "int",
                "default": "5"
             }
@@ -152,15 +152,22 @@
             },
             {
                "name": "piano_mode",
-               "label": "钢琴模式（只能填 21 或 36）",
+               "label": "钢琴模式 (只能填 21 或 36)",
                "pipeline_type": "string",
                "default": "36"
             },
             {
                "name": "timeout_mode",
-               "label": "超时模式（只能填 同步时轴 或 速率不变）",
+               "label": "超时模式 (只能填 同步时轴 或 速率不变)",
                "pipeline_type": "string",
                "default": "速率不变"
+            },
+            {
+               "name": "use_custom_winapi",
+               "label": "使用自定义的 WinAPI (1 为开 0 为关)",
+               "description": "使用自定义的 WinAPI 代替 MAAFW 的键盘输入 API, 以解决输入延迟问题。会导致指针光标闪烁但不会抢占鼠标",
+               "pipeline_type": "int",
+               "default": "1"
             }
          ],
          "pipeline_override": {
@@ -171,7 +178,8 @@
                         "midi_path": "{midi_path}",
                         "bpm": "{bpm}",
                         "piano_mode": "{piano_mode}",
-                        "timeout_mode": "{timeout_mode}"
+                        "timeout_mode": "{timeout_mode}",
+                        "use_custom_winapi": "{use_custom_winapi}"
                      }
                   }
                }

@@ -6,7 +6,15 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Final, Literal, LiteralString, NamedTuple, override
+from typing import (
+    TYPE_CHECKING,
+    Final,
+    Literal,
+    LiteralString,
+    NamedTuple,
+    cast,
+    override,
+)
 
 from maa.agent.agent_server import AgentServer
 from maa.custom_action import CustomAction
@@ -94,19 +102,40 @@ class Piano_play(CustomAction):
 
         param = json.loads(argv.custom_action_param)
         assert isinstance(param, dict)
-        print(param)
+        # print(param)
 
         piano_mode = param.get("piano_mode")
         if piano_mode not in {"21", "36"}:
-            print("钢琴模式必须是 21 或 36")
+            print("钢琴模式 必须是 21 或 36")
             return False
+        if TYPE_CHECKING:
+            piano_mode = cast("Literal['21', '36']", piano_mode)
         print(f"钢琴模式: {piano_mode}")
 
         timeout_mode = param.get("timeout_mode")
         if timeout_mode not in {"同步时轴", "速率不变"}:
-            print("超时模式必须是 同步时轴 或 速率不变")
+            print("超时模式 必须是 同步时轴 或 速率不变")
             return False
+        if TYPE_CHECKING:
+            timeout_mode = cast("Literal['同步时轴', '速率不变']", timeout_mode)
         print(f"超时模式: {timeout_mode}")
+
+        use_custom_winapi = param.get("use_custom_winapi")
+        if isinstance(use_custom_winapi, str):
+            if use_custom_winapi.isdigit():
+                use_custom_winapi = int(use_custom_winapi)
+            else:
+                print("使用自定义的 WinAPI 必须是整数")
+                return False
+        if not isinstance(use_custom_winapi, int):
+            print(f"使用自定义的 WinAPI 类型异常: {type(use_custom_winapi)}")
+            return False
+        if use_custom_winapi not in {0, 1}:
+            print("使用自定义的 WinAPI 必须是 0 或 1")
+            return False
+        use_custom_winapi = bool(use_custom_winapi)
+        if use_custom_winapi:
+            print("使用自定义的 WinAPI")
 
         midi__key: dict[int, Key] = {
             midi: Key(
@@ -252,9 +281,17 @@ class Piano_play(CustomAction):
             print("警告: 高音溢出")
 
         # 8. 开始按时间顺序模拟按键
+        hwnd = controller.info.get("hwnd")
+        if not isinstance(hwnd, int):
+            print("获取 hwnd 失败")
+            return False
+        KEY_MSG_INTERVAL: Final[float] = 0
+        """按下和抬起键之间的间隔"""
+
         start_real = time.time()
         timeout: float = 0
         timeout_total: float = 0
+
         for qb in sorted(grouped.keys()):
             target_real = start_real + qb * quarter_sec
             now = time.time()
@@ -281,10 +318,14 @@ class Piano_play(CustomAction):
             if all(
                 k.mode not in {Key.Mode.only_ctrl, Key.Mode.only_shift} for k in keys
             ):
-                for key in keys:
-                    post_job_list.append(controller.post_click_key(key.code))
-                for job in post_job_list:
-                    job.wait()
+                if use_custom_winapi:
+                    with Win_virtual_key.Msg(hwnd, (k.code for k in keys)):
+                        time.sleep(KEY_MSG_INTERVAL)
+                else:
+                    for key in keys:
+                        post_job_list.append(controller.post_click_key(key.code))
+                    for job in post_job_list:
+                        job.wait()
 
             else:
                 key_list_always = [k for k in keys if k.mode == Key.Mode.always]
@@ -297,30 +338,57 @@ class Piano_play(CustomAction):
 
                 # region: Shift and Always
                 if key_list_shift:
-                    controller.post_key_down(0x10).wait()
+                    keys_shift = itertools.chain(key_list_shift, key_list_always)
+                    if use_custom_winapi:
+                        with Win_virtual_key.Msg(hwnd, [Win_virtual_key.VK_SHIFT]):
+                            time.sleep(KEY_MSG_INTERVAL)
+                            with Win_virtual_key.Msg(
+                                hwnd, (k.code for k in keys_shift)
+                            ):
+                                time.sleep(KEY_MSG_INTERVAL)
+                    else:
+                        controller.post_key_down(
+                            Win_virtual_key.VK_SHIFT.value.code
+                        ).wait()
 
-                    for key in itertools.chain(key_list_shift, key_list_always):
-                        post_job_list.append(controller.post_click_key(key.code))
-                    for job in post_job_list:
-                        job.wait()
+                        for key in keys_shift:
+                            post_job_list.append(controller.post_click_key(key.code))
+                        for job in post_job_list:
+                            job.wait()
 
-                    controller.post_key_up(0x10).wait()
+                        controller.post_key_up(
+                            Win_virtual_key.VK_SHIFT.value.code
+                        ).wait()
                 # endregion
 
                 # region: Ctrl
                 if key_list_ctrl:
-                    controller.post_key_down(0x11).wait()
+                    keys_ctrl = (
+                        k
+                        for k in itertools.chain(
+                            key_list_ctrl, () if key_list_shift else key_list_always
+                        )
+                        if k.mode in {Key.Mode.only_ctrl, Key.Mode.no_shift}
+                    )
+                    if use_custom_winapi:
+                        with Win_virtual_key.Msg(hwnd, [Win_virtual_key.VK_CONTROL]):
+                            time.sleep(KEY_MSG_INTERVAL)
+                            with Win_virtual_key.Msg(hwnd, (k.code for k in keys_ctrl)):
+                                time.sleep(KEY_MSG_INTERVAL)
+                    else:
+                        controller.post_key_down(
+                            Win_virtual_key.VK_CONTROL.value.code
+                        ).wait()
 
-                    post_job_list.clear()
-                    for key in itertools.chain(
-                        key_list_ctrl, () if key_list_shift else key_list_always
-                    ):
-                        if key.mode in {Key.Mode.only_ctrl, Key.Mode.no_shift}:
+                        post_job_list.clear()
+                        for key in keys_ctrl:
                             post_job_list.append(controller.post_click_key(key.code))
-                    for job in post_job_list:
-                        job.wait()
+                        for job in post_job_list:
+                            job.wait()
 
-                    controller.post_key_up(0x11).wait()
+                        controller.post_key_up(
+                            Win_virtual_key.VK_CONTROL.value.code
+                        ).wait()
                 # endregion
 
         return True
