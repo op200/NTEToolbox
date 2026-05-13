@@ -330,6 +330,8 @@ class Win_virtual_key(enum.Enum):
             WM_MOUSEMOVE = 0x0200  # 鼠标移动
             WM_LBUTTONDOWN = 0x0201  # 左键按下
             WM_LBUTTONUP = 0x0202  # 左键释放
+            WM_RBUTTONDOWN = 0x0204  # 右键按下
+            WM_RBUTTONUP = 0x0205  # 右键释放
             WM_CLOSE = 0x0010  # 请求关闭窗口
 
         def _make_key_lparam(
@@ -453,3 +455,46 @@ class Win_virtual_key(enum.Enum):
                 )
             if self.force_focus:
                 self._restore_focus()
+
+        def click(
+            self,
+            x: int,
+            y: int,
+            button: Literal["left", "right"] = "left",
+        ) -> None:
+            """
+            **AI** (对异环窗口不起作用，暂无实际作用) 向目标窗口的客户区相对坐标 (x, y) 发送一次鼠标点击消息。
+
+            Parameters
+            ----------
+            x : int
+                客户区 X 坐标（像素），范围 0~65535。
+            y : int
+                客户区 Y 坐标（像素），范围 0~65535。
+            button : str, optional
+                "left" 发送左键点击，"right" 发送右键点击，默认 "left"。
+
+            Notes
+            -----
+            - 此方法直接构造并投递窗口消息，**不依赖键盘焦点**，因此不会调用
+            `_force_focus()` 或 `_restore_focus()`。
+            - 若目标窗口正在被其他线程锁定或处于挂起状态，消息可能被丢弃；
+            对于高强度自动化场景，建议结合 `SendInput` 或 UI Automation 使用。
+
+            """
+            # 客户区坐标打包为 lParam（低 X 高 Y）
+            lparam = (y & 0xFFFF) << 16 | (x & 0xFFFF)
+
+            # 根据按钮类型确定对应的消息和 wParam
+            if button == "left":
+                down_msg = self.Post_msg_msg.WM_LBUTTONDOWN
+                up_msg = self.Post_msg_msg.WM_LBUTTONUP
+                wparam_down = 0x0001  # MK_LBUTTON
+            else:
+                down_msg = self.Post_msg_msg.WM_RBUTTONDOWN
+                up_msg = self.Post_msg_msg.WM_RBUTTONUP
+                wparam_down = 0x0002  # MK_RBUTTON
+
+            # 发送按下与抬起，完成一次完整点击
+            self._send_msg(down_msg, wparam_down, lparam)
+            self._send_msg(up_msg, 0, lparam)

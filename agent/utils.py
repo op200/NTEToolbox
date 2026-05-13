@@ -4,10 +4,12 @@ import re
 import urllib.request
 from pathlib import Path
 from threading import Thread
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, Any, TypeGuard, get_args, get_origin, override
 
 from maa.agent.agent_server import AgentServer
 from maa.custom_recognition import CustomRecognition, RectType
+
+from .log import log
 
 if TYPE_CHECKING:
     import numpy as np
@@ -53,12 +55,12 @@ class github:
                         return ver.lstrip("v")
                     _match = re.search(reg, ver)
                     if _match is None:
-                        print(f"Match failed: {release_api_url} {reg} {_match}")
+                        log.error(f"Match failed: {release_api_url} {reg} {_match}")
                         return None
                     return _match.group(1)
                 raise ValueError(f"ver = {ver!r}")
         except Exception as e:
-            print(
+            log.error(
                 f"'{cls.__name__}.{cls.get_latest_release_ver.__name__}' execution failed: {e}"
             )
 
@@ -101,13 +103,13 @@ def get_project_version() -> str | None:
             try:
                 interface = json.loads(path.read_text(encoding="utf-8"))
             except Exception as e:
-                print(f'解码 "{path}" 失败: {e} {e!r}')
+                log.error(f'解码 "{path}" 失败: {e} {e!r}')
                 return None
             if not isinstance(interface, dict):
-                print("interface 不是 dict")
+                log.error("interface 不是 dict")
                 return None
             if (ver_current := interface.get("version")) is None:
-                print("interface 中没有 version")
+                log.error("interface 中没有 version")
                 return None
             return ver_current
     return None
@@ -126,16 +128,16 @@ def check_release() -> None:
                 "https://api.github.com/repos/op200/NTEToolbox/releases/latest"
             )
             if ver_release is None:
-                print("获取 Github Release 失败")
+                log.warning("获取 Github Release 失败")
                 return
 
             if check_ver(ver_release, ver_current):
-                print(
+                log.info(
                     f"有新版本: {ver_current} -> {ver_release}。"
                     "在此下载: https://github.com/op200/NTEToolbox/releases"
                 )
             return
-    print("获取 interface 文件失败")
+    log.error("获取 interface 文件失败")
 
 
 @AgentServer.custom_recognition("启动测试")
@@ -156,15 +158,94 @@ class Adswq(CustomRecognition):
 
         h, w = img.shape[:2]
         if (w, h) != DEFAULT_RESOLUTION:
-            print(
+            log.error(
                 f"截图分辨率 {w} x {h} 不是 {DEFAULT_RESOLUTION[0]} x {DEFAULT_RESOLUTION[1]}"
             )
             success = False
         if w * 9 != h * 16:
-            print(f"截图分辨率 {w} x {h} 不是 16:9")
+            log.error(f"截图分辨率 {w} x {h} 不是 16:9")
             success = False
 
         if success is False:
             return None
 
         return [0, 0, w, h]
+
+
+def type_match[T](val: Any, t: type[T]) -> TypeGuard[T]:
+    """
+    检查值是否匹配给定的类型（支持泛型）
+
+    支持的类型包括：
+    - 基本类型: int, str, list, dict, tuple, set
+    - 泛型类型: list[str], dict[str, int], tuple[int, ...]
+    - 联合类型: int | str, Union[int, str]
+    - 可选类型: Optional[str]
+    - 嵌套泛型: list[list[str]], dict[str, list[int]]
+
+    Args:
+        val: 要检查的值
+        t: 目标类型，可以是普通类型或泛型
+
+    Returns:
+        bool: 值是否匹配目标类型
+
+    """
+    t_org = get_origin(t)
+
+    # 如果不是泛型类型，直接使用 isinstance
+    if t_org is None:
+        return isinstance(val, t)
+
+    # 首先检查是否是 b_org 的实例
+    if not isinstance(val, t_org):
+        return False
+
+    # 获取类型参数
+    args = get_args(t)
+    if not args:  # 没有类型参数，如 List
+        return True
+
+    # 根据不同的原始类型进行检查
+    if t_org is list:
+        # list[T] 检查
+        if len(args) == 1:
+            elem_type = args[0]
+            return all(type_match(item, elem_type) for item in val)
+
+    elif t_org is tuple:
+        # tuple[T1, T2, ...] 或 tuple[T, ...] 检查
+        if len(args) == 2 and args[1] is ...:  # 可变长度元组
+            elem_type = args[0]
+            return all(type_match(item, elem_type) for item in val)
+        # 固定长度元组
+        if len(val) != len(args):
+            return False
+        return all(type_match(item, t) for item, t in zip(val, args, strict=False))
+
+    elif t_org is dict:
+        # dict[K, V] 检查
+        if len(args) == 2:
+            key_type, value_type = args
+            return all(
+                type_match(k, key_type) and type_match(v, value_type)
+                for k, v in val.items()
+            )
+
+    elif t_org is set:
+        # set[T] 检查
+        if len(args) == 1:
+            elem_type = args[0]
+            return all(type_match(item, elem_type) for item in val)
+
+    elif t_org is frozenset:
+        # frozenset[T] 检查
+        if len(args) == 1:
+            elem_type = args[0]
+            return all(type_match(item, elem_type) for item in val)
+
+    elif hasattr(t_org, "__name__") and t_org.__name__ == "Union":
+        # Union[T1, T2, ...] 或 T1 | T2 检查
+        return any(type_match(val, t) for t in args)
+
+    return True

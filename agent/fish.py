@@ -1,12 +1,15 @@
 import functools
 import json
 import time
-from typing import TYPE_CHECKING, Self, override
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, override
 
 from maa.agent.agent_server import AgentServer
 from maa.custom_action import CustomAction
 from maa.define import OCRResult
 
+from .log import log
+from .utils import type_match
 from .virtual_key import Win_virtual_key
 
 if TYPE_CHECKING:
@@ -49,7 +52,7 @@ class Fish_溜鱼(CustomAction):
             if not 0 <= 溜鱼_midpoint_sleep_time < 200:
                 raise ValueError("溜鱼_midpoint_sleep_time 值范围不正常")
         except Exception as e:
-            print(f"选项初始化错误: {e} {e!r}")
+            log.error(f"选项初始化错误: {e} {e!r}")
             return False
 
         for _ in range(MAX_RANGE):
@@ -72,11 +75,11 @@ class Fish_溜鱼(CustomAction):
                 },
             )
             if greem_reco_detail is None:
-                print(f"识别绿色错误: {greem_reco_detail}")
+                log.warning(f"识别绿色错误: {greem_reco_detail}")
                 return True
             gbox = greem_reco_detail.box
             if gbox is None:
-                # print("识别不到绿色")
+                log.debug("识别不到绿色")
                 time.sleep(2)  # 等待弹出获鱼界面
                 return True
 
@@ -97,11 +100,11 @@ class Fish_溜鱼(CustomAction):
                 },
             )
             if yellow_reco_detail is None:
-                print(f"识别黄色错误: {yellow_reco_detail}")
+                log.warning(f"识别黄色错误: {yellow_reco_detail}")
                 return True
             ybox = yellow_reco_detail.box
             if ybox is None:
-                # print("识别不到黄色")
+                log.debug("识别不到黄色")
                 time.sleep(2)  # 等待弹出获鱼界面
                 return True
 
@@ -122,7 +125,7 @@ class Fish_溜鱼(CustomAction):
             time.sleep((diff_abs + max(0, 溜鱼_midpoint_pix_range / 2 - 1)) / 200)
             controller.post_key_up(key).wait()
 
-        print(f"溜鱼超出 {MAX_RANGE} 次循环")
+        log.debug(f"溜鱼超出 {MAX_RANGE} 次循环")
         return True
 
 
@@ -141,16 +144,12 @@ class Fish_卖鱼_and_买换饵(CustomAction):
         def 检测初始状态() -> bool:
             初始状态_reco_detail = context.run_recognition("初始状态", _get_img())
             if 初始状态_reco_detail is None:
-                print(f"{Fish_卖鱼_and_买换饵.__name__} 初始状态 识别错误")
+                log.error(f"{Fish_卖鱼_and_买换饵.__name__} 初始状态 识别错误")
                 return False
             return 初始状态_reco_detail.box is not None
 
-        class Empty_job:
-            def wait(self) -> Self:
-                return self
-
         if 检测初始状态() is False:
-            print(f"{Fish_卖鱼_and_买换饵.__name__} 初始状态 识别不到")
+            log.error(f"{Fish_卖鱼_and_买换饵.__name__} 初始状态 识别不到")
             return False
 
         # region: 市场界面
@@ -184,14 +183,14 @@ class Fish_卖鱼_and_买换饵(CustomAction):
             },
         )
         if 匹配万能鱼饵_reco_detail is None:
-            print(f"{Fish_卖鱼_and_买换饵.__name__} 匹配万能鱼饵 识别错误")
+            log.error(f"{Fish_卖鱼_and_买换饵.__name__} 匹配万能鱼饵 识别错误")
             return False
         if 匹配万能鱼饵_reco_detail.box is None:
-            print(f"{Fish_卖鱼_and_买换饵.__name__} 匹配万能鱼饵 识别不到")
+            log.error(f"{Fish_卖鱼_and_买换饵.__name__} 匹配万能鱼饵 识别不到")
             return False
         for ocr_res in 匹配万能鱼饵_reco_detail.all_results:
             if not isinstance(ocr_res, OCRResult):
-                print("匹配万能鱼饵 OCR 结果不是 OCRResult 类型")
+                log.error("匹配万能鱼饵 OCR 结果不是 OCRResult 类型")
                 return False
             if ocr_res.score < 0.9:
                 continue
@@ -213,15 +212,19 @@ class Fish_卖鱼_and_买换饵(CustomAction):
                     },
                 )
                 if 匹配万能鱼饵价格_reco_detail is None:
-                    print(f"{Fish_卖鱼_and_买换饵.__name__} 匹配万能鱼饵价格 识别错误")
+                    log.error(
+                        f"{Fish_卖鱼_and_买换饵.__name__} 匹配万能鱼饵价格 识别错误"
+                    )
                     return False
                 if 匹配万能鱼饵价格_reco_detail.box is None:
-                    print(f"{Fish_卖鱼_and_买换饵.__name__} 匹配万能鱼饵价格 识别不到")
+                    log.error(
+                        f"{Fish_卖鱼_and_买换饵.__name__} 匹配万能鱼饵价格 识别不到"
+                    )
                     return False
                 all_results = 匹配万能鱼饵价格_reco_detail.all_results
                 if len(all_results) == 1:
                     if not isinstance(all_results[0], OCRResult):
-                        print("匹配万能鱼饵价格 OCR 结果不是 OCRResult 类型")
+                        log.error("匹配万能鱼饵价格 OCR 结果不是 OCRResult 类型")
                         return False
                     if all_results[0].score > 0.96 and all_results[0].text == "5":
                         for _ in range(3):  # 买 n * 99 个
@@ -233,6 +236,50 @@ class Fish_卖鱼_and_买换饵(CustomAction):
                             ):
                                 action().wait()
                                 time.sleep(1.5)
+
+                        # 获取剩余鱼鳞币
+                        匹配鱼鳞币_reco_detail = context.run_recognition(
+                            "匹配鱼鳞币",
+                            _get_img(),
+                            pipeline_override={
+                                "匹配鱼鳞币": {
+                                    "recognition": {
+                                        "type": "OCR",
+                                        "param": {
+                                            "roi": [884, 22, 300, 38],
+                                        },
+                                    }
+                                }
+                            },
+                        )
+                        if 匹配鱼鳞币_reco_detail is None:
+                            log.error(
+                                f"{Fish_卖鱼_and_买换饵.__name__} 匹配鱼鳞币 识别错误"
+                            )
+                            return False
+                        all_results = 匹配鱼鳞币_reco_detail.all_results
+                        if not type_match(all_results, Sequence[OCRResult]):
+                            log.error(
+                                "匹配鱼鳞币 OCR 结果不是 Sequence[OCRResult] 类型"
+                            )
+                            return False
+                        currency_list: list[int] = [
+                            int(text)
+                            for r in all_results
+                            if r.score > 0.96
+                            and (text := r.text.replace(",", "")).isdigit()
+                        ]
+                        if 匹配鱼鳞币_reco_detail.box is None:
+                            log.error(
+                                f"{Fish_卖鱼_and_买换饵.__name__} 匹配鱼鳞币 识别不到"
+                            )
+                            return False
+
+                        if len(currency_list) == 2:
+                            log.info(f"鱼鳞币: {currency_list[0]:,}")
+                            log.info(f"方斯: {currency_list[1]:,}")
+                        else:
+                            log.warning("识别货币失败")
 
                         controller.post_click_key(  # 退出到初始
                             Win_virtual_key.VK_ESCAPE.value.code
