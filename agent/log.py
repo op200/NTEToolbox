@@ -110,7 +110,8 @@ type Logging_level = Literal[
 ]
 
 
-def _setup_std_logger(console_level: Logging_level = "INFO") -> logging.Logger:
+def setup_logger(console_level: Logging_level = "INFO") -> logging.Logger:
+    """设置 logger"""
     _std_logger.handlers.clear()
     _std_logger.setLevel(logging.DEBUG)
     _std_logger.propagate = False
@@ -123,11 +124,6 @@ def _setup_std_logger(console_level: Logging_level = "INFO") -> logging.Logger:
     _std_logger.addHandler(console_handler)
 
     return _std_logger
-
-
-def setup_logger(console_level: Logging_level = "INFO"):
-    """设置 logger"""
-    return _setup_std_logger(console_level=console_level)
 
 
 def change_console_level(level: Logging_level = "DEBUG"):

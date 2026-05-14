@@ -277,12 +277,18 @@ class Piano_play(CustomAction):
 
         # 7. 音高范围检查
         all_midi = [ne.midi for ne in notes_events]
-        midi_min, midi_max = min(all_midi), max(all_midi)
-        log.info(f"midi 范围: {midi_min} - {midi_max}, 跨度: {midi_max - midi_min}")
+        midi_min_list, midi_max_list = (
+            [midi for midi in all_midi if midi <= LOW_PITCH_OVERFLOW_LINE],
+            [midi for midi in all_midi if midi >= HIGH_PITCH_OVERFLOW_LINE],
+        )
+        midi_min, midi_max = min(midi_min_list), max(midi_max_list)
+        log.info(f"MIDI 范围: {midi_min} - {midi_max}, 跨度: {midi_max - midi_min}")
+        _max_len = len(str(max(len(midi_min_list), len(midi_max_list))))
         if midi_min <= LOW_PITCH_OVERFLOW_LINE:
-            log.warning("警告: 低音溢出")
+            log.warning(f"警告: 低音溢出 {len(midi_min_list):<{_max_len}} 个音符")
         if midi_max >= HIGH_PITCH_OVERFLOW_LINE:
-            log.warning("警告: 高音溢出")
+            log.warning(f"警告: 高音溢出 {len(midi_max_list):<{_max_len}} 个音符")
+        del all_midi, midi_min_list, midi_max_list, midi_min, midi_max, _max_len
 
         # 8. 开始按时间顺序模拟按键
         hwnd = controller.info.get("hwnd")
@@ -297,22 +303,26 @@ class Piano_play(CustomAction):
         timeout_total: float = 0
 
         for qb in sorted(grouped.keys()):
+            if context.tasker.stopping:
+                log.info("手动终止")
+                return False
             target_real = start_real + qb * quarter_sec
             now = time.time()
             timeout = target_real + timeout_total - now
-            if timeout_mode == "同步时轴":
-                if target_real > now:
-                    time.sleep(target_real - now)
-                else:
-                    log.warning(f"超时: {round((now - target_real) * 1000):>7,}ms")
-            else:  # noqa: PLR5501
-                if timeout >= 0:
-                    time.sleep(timeout)
-                else:
-                    timeout_total = now - target_real
-                    log.warning(
-                        f"超时: {round((-timeout) * 1000):>5,}ms  {round(timeout_total * 1000):>7,}ms"
-                    )
+            match timeout_mode:
+                case "同步时轴":
+                    if target_real > now:
+                        time.sleep(target_real - now)
+                    elif (_timeout_print := round((now - target_real) * 1000)) > 0:
+                        log.warning(f"超时: {_timeout_print:>7,}ms")
+                case "速率不变":
+                    if timeout >= 0:
+                        time.sleep(timeout)
+                    elif (_timeout_print := round((-timeout) * 1000)) > 0:
+                        timeout_total = now - target_real
+                        log.warning(
+                            f"超时: {_timeout_print:>5,}ms  {round(timeout_total * 1000):>7,}ms"
+                        )
 
             # 收集当前时间点的所有按键
             keys: set[Key] = {key_map[ne.midi] for ne in grouped[qb]}
@@ -322,6 +332,7 @@ class Piano_play(CustomAction):
             if all(
                 k.mode not in {Key.Mode.only_ctrl, Key.Mode.only_shift} for k in keys
             ):
+                # 无长按情况
                 if use_custom_winapi:
                     with Win_virtual_key.Msg(hwnd, (k.code for k in keys)):
                         time.sleep(KEY_MSG_INTERVAL)
@@ -331,68 +342,62 @@ class Piano_play(CustomAction):
                     for job in post_job_list:
                         job.wait()
 
-            else:
-                key_list_always = [k for k in keys if k.mode == Key.Mode.always]
-                key_list_ctrl = [
-                    k for k in keys if k.mode in {Key.Mode.only_ctrl, Key.Mode.no_shift}
-                ]
-                key_list_shift = [
-                    k for k in keys if k.mode in {Key.Mode.only_shift, Key.Mode.no_ctrl}
-                ]
+                continue
 
-                # region: Shift and Always
-                if key_list_shift:
-                    keys_shift = itertools.chain(key_list_shift, key_list_always)
-                    if use_custom_winapi:
-                        with Win_virtual_key.Msg(hwnd, [Win_virtual_key.VK_SHIFT]):
+            # 有长按情况
+            key_list_always = [k for k in keys if k.mode == Key.Mode.always]
+            key_list_ctrl = [
+                k for k in keys if k.mode in {Key.Mode.only_ctrl, Key.Mode.no_shift}
+            ]
+            key_list_shift = [
+                k for k in keys if k.mode in {Key.Mode.only_shift, Key.Mode.no_ctrl}
+            ]
+
+            # region: Shift and Always
+            if key_list_shift:
+                keys_shift = itertools.chain(key_list_shift, key_list_always)
+                if use_custom_winapi:
+                    with Win_virtual_key.Msg(hwnd, [Win_virtual_key.VK_SHIFT]):
+                        time.sleep(KEY_MSG_INTERVAL)
+                        with Win_virtual_key.Msg(hwnd, (k.code for k in keys_shift)):
                             time.sleep(KEY_MSG_INTERVAL)
-                            with Win_virtual_key.Msg(
-                                hwnd, (k.code for k in keys_shift)
-                            ):
-                                time.sleep(KEY_MSG_INTERVAL)
-                    else:
-                        controller.post_key_down(
-                            Win_virtual_key.VK_SHIFT.value.code
-                        ).wait()
+                else:
+                    controller.post_key_down(Win_virtual_key.VK_SHIFT.value.code).wait()
 
-                        for key in keys_shift:
-                            post_job_list.append(controller.post_click_key(key.code))
-                        for job in post_job_list:
-                            job.wait()
+                    for key in keys_shift:
+                        post_job_list.append(controller.post_click_key(key.code))
+                    for job in post_job_list:
+                        job.wait()
 
-                        controller.post_key_up(
-                            Win_virtual_key.VK_SHIFT.value.code
-                        ).wait()
-                # endregion
+                    controller.post_key_up(Win_virtual_key.VK_SHIFT.value.code).wait()
+            # endregion
 
-                # region: Ctrl
-                if key_list_ctrl:
-                    keys_ctrl = (
-                        k
-                        for k in itertools.chain(
-                            key_list_ctrl, () if key_list_shift else key_list_always
-                        )
-                        if k.mode in {Key.Mode.only_ctrl, Key.Mode.no_shift}
+            # region: Ctrl
+            if key_list_ctrl:
+                keys_ctrl = (
+                    k
+                    for k in itertools.chain(
+                        key_list_ctrl, () if key_list_shift else key_list_always
                     )
-                    if use_custom_winapi:
-                        with Win_virtual_key.Msg(hwnd, [Win_virtual_key.VK_CONTROL]):
+                    if k.mode in {Key.Mode.only_ctrl, Key.Mode.no_shift}
+                )
+                if use_custom_winapi:
+                    with Win_virtual_key.Msg(hwnd, [Win_virtual_key.VK_CONTROL]):
+                        time.sleep(KEY_MSG_INTERVAL)
+                        with Win_virtual_key.Msg(hwnd, (k.code for k in keys_ctrl)):
                             time.sleep(KEY_MSG_INTERVAL)
-                            with Win_virtual_key.Msg(hwnd, (k.code for k in keys_ctrl)):
-                                time.sleep(KEY_MSG_INTERVAL)
-                    else:
-                        controller.post_key_down(
-                            Win_virtual_key.VK_CONTROL.value.code
-                        ).wait()
+                else:
+                    controller.post_key_down(
+                        Win_virtual_key.VK_CONTROL.value.code
+                    ).wait()
 
-                        post_job_list.clear()
-                        for key in keys_ctrl:
-                            post_job_list.append(controller.post_click_key(key.code))
-                        for job in post_job_list:
-                            job.wait()
+                    post_job_list.clear()
+                    for key in keys_ctrl:
+                        post_job_list.append(controller.post_click_key(key.code))
+                    for job in post_job_list:
+                        job.wait()
 
-                        controller.post_key_up(
-                            Win_virtual_key.VK_CONTROL.value.code
-                        ).wait()
-                # endregion
+                    controller.post_key_up(Win_virtual_key.VK_CONTROL.value.code).wait()
+            # endregion
 
         return True

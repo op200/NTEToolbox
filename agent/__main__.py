@@ -13,9 +13,12 @@ def main() -> None:
 
     socket_id = sys.argv[-1]
 
+    log.debug("AgentServer starting...")
     AgentServer.start_up(socket_id)
+    log.debug("AgentServer started")
     AgentServer.join()
     AgentServer.shut_down()
+    log.debug("AgentServer shutdown")
 
 
 if __name__ == "__main__":
