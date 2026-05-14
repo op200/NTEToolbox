@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from maa.context import Context
     from maa.job import Job
 
+
 type Key_name = Literal["Z", "X", "C", "V", "B", "N", "M","A", "S", "D", "F", "G", "H", "J", "Q", "W", "E", "R", "T", "Y", "U"]  # fmt: off
 
 
@@ -86,7 +87,9 @@ class Piano_play(CustomAction):
         try:
             import music21
         except ModuleNotFoundError:
-            log.error("maafw 未安装，执行以下命令以安装或更新: pip install -U maafw")
+            log.error(
+                "music21 未安装，执行以下命令以安装或更新: python -m pip install -U music21"
+            )
             sys.exit(Exit_code.import_failed.value)
 
         if TYPE_CHECKING:

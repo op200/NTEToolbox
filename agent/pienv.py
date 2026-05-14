@@ -22,6 +22,7 @@ __all__ = [
     "PlayCoverConfig",
     "Resource",
     "Win32Config",
+    "env",
 ]
 
 _module_logger = logging.getLogger(__name__)

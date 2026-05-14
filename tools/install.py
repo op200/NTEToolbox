@@ -125,7 +125,7 @@ def install_resource() -> None:
         dirs_exist_ok=True,
     )
 
-    for interface_filename in ("interface.json", "interface.jsonc"):
+    for interface_filename in ("interface.jsonc", "interface.json"):
         interface_path_org: Path = working_dir / "assets" / interface_filename
         if not interface_path_org.is_file():
             continue
