@@ -5,5 +5,12 @@
          "type": "Custom",
          "param": { "custom_recognition": "启动测试" }
       }
+   },
+   "全局设置": {
+      "rate_limit": 0,
+      "action": {
+         "type": "Custom",
+         "param": { "custom_action": "全局设置" }
+      }
    }
 }

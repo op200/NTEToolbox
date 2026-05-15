@@ -4,7 +4,7 @@
    "description": "异环工具箱",
    "license": "AGPLv3",
    "github": "https://github.com/op200/NTEToolbox",
-   "version": "1.3.0",
+   "version": "1.4.0",
    "resource": [
       {
          "name": "默认",
@@ -67,6 +67,11 @@
    ],
    "task": [
       {
+         "name": "全局设置",
+         "entry": "全局设置",
+         "option": ["全局设置"]
+      },
+      {
          "name": "钓鱼",
          "entry": "钓鱼01",
          "option": [
@@ -82,6 +87,36 @@
       }
    ],
    "option": {
+      "全局设置": {
+         "type": "input",
+         "inputs": [
+            {
+               "name": "debug_mode_switch",
+               "label": "debug 模式开关 (1 为开 0 为关)",
+               "pipeline_type": "int",
+               "default": "0"
+            },
+            {
+               "name": "logging_switch",
+               "label": "日志开关 (1 为开 0 为关)",
+               "description": "关闭后 debug 目录不再写入 maafw 运行时日志。本质上是修改 maa_option.json 的 logging，所以重启后才能生效",
+               "pipeline_type": "int",
+               "default": "1"
+            }
+         ],
+         "pipeline_override": {
+            "全局设置": {
+               "action": {
+                  "param": {
+                     "custom_action_param": {
+                        "debug_mode_switch": "{debug_mode_switch}",
+                        "logging_switch": "{logging_switch}"
+                     }
+                  }
+               }
+            }
+         }
+      },
       "溜鱼设置": {
          "type": "input",
          "inputs": [
@@ -192,7 +227,7 @@
             {
                "name": "use_custom_winapi",
                "label": "使用自定义的 WinAPI (1 为开 0 为关)",
-               "description": "使用自定义的 WinAPI 代替 MAAFW 的键盘输入 API, 以解决输入延迟问题。会导致指针光标闪烁但不会抢占鼠标",
+               "description": "使用自定义的 WinAPI 代替 maafw 的键盘输入 API, 以解决输入延迟问题。会导致指针光标闪烁但不会抢占鼠标",
                "pipeline_type": "int",
                "default": "1"
             }

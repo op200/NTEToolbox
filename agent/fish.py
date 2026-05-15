@@ -43,7 +43,7 @@ class Fish_溜鱼(CustomAction):
             溜鱼_midpoint_pix_range = param.get("溜鱼_midpoint_pix_range")
             溜鱼_midpoint_sleep_time = param.get("溜鱼_midpoint_sleep_time")
             if 溜鱼_midpoint_pix_range is None or 溜鱼_midpoint_sleep_time is None:
-                raise ValueError("必须填值")
+                raise ValueError("溜鱼_midpoint_pix_range 必须填值")
             溜鱼_midpoint_pix_range, 溜鱼_midpoint_sleep_time = (
                 int(溜鱼_midpoint_pix_range),
                 int(溜鱼_midpoint_sleep_time),
@@ -151,7 +151,7 @@ class Fish_卖鱼_and_买换饵(CustomAction):
 
             买饵次数 = param.get("买饵次数")
             if 买饵次数 is None:
-                raise ValueError("必须填值")
+                raise ValueError("买饵次数 必须填值")
             买饵次数 = int(买饵次数)
             if not 0 < 买饵次数 < 20:
                 raise ValueError("买饵次数 值范围不正常")
