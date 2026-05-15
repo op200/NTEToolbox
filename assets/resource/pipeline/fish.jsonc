@@ -120,7 +120,8 @@
       "action": {
          "type": "Custom",
          "param": {
-            "custom_action": "fish_卖鱼_and_买换饵"
+            "custom_action": "fish_卖鱼_and_买换饵",
+            "custom_action_param": null // option 覆写
          }
       },
       "next": "初始状态"

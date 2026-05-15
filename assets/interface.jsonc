@@ -4,7 +4,7 @@
    "description": "异环工具箱",
    "license": "AGPLv3",
    "github": "https://github.com/op200/NTEToolbox",
-   "version": "1.2.0",
+   "version": "1.3.0",
    "resource": [
       {
          "name": "默认",
@@ -69,7 +69,11 @@
       {
          "name": "钓鱼",
          "entry": "钓鱼01",
-         "option": ["溜鱼设置", "卖鱼买换饵设置"]
+         "option": [
+            "溜鱼设置",
+            "卖鱼买换饵开关",
+            "卖鱼买换饵设置"
+         ]
       },
       {
          "name": "弹钢琴 (键盘输入)",
@@ -107,7 +111,7 @@
             }
          }
       },
-      "卖鱼买换饵设置": {
+      "卖鱼买换饵开关": {
          "type": "switch",
          "label": "自动卖鱼买换饵 (抢占鼠标)",
          "description": "无饵或满舱时，按顺序执行 卖鱼 买饵 换饵。由于涉及点击操作，会抢占鼠标",
@@ -136,6 +140,29 @@
             }
          ],
          "default_case": "No"
+      },
+      "卖鱼买换饵设置": {
+         "type": "input",
+         "inputs": [
+            {
+               "name": "买饵次数",
+               "label": "买饵次数",
+               "description": "次数 n 代表买 n * 99 个饵",
+               "pipeline_type": "int",
+               "default": "4"
+            }
+         ],
+         "pipeline_override": {
+            "卖鱼买换饵": {
+               "action": {
+                  "param": {
+                     "custom_action_param": {
+                        "买饵次数": "{买饵次数}"
+                     }
+                  }
+               }
+            }
+         }
       },
       "弹钢琴_keybord_设置": {
          "type": "input",

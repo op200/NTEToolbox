@@ -35,10 +35,11 @@ class Fish_溜鱼(CustomAction):
     ) -> bool:
         controller = context.tasker.controller
 
-        param = json.loads(argv.custom_action_param)
-        assert isinstance(param, dict), "缺少参数"
-
         try:
+            param = json.loads(argv.custom_action_param)
+            if not isinstance(param, dict):
+                raise TypeError("缺少 argv.custom_action_param 或类型错误")
+
             溜鱼_midpoint_pix_range = param.get("溜鱼_midpoint_pix_range")
             溜鱼_midpoint_sleep_time = param.get("溜鱼_midpoint_sleep_time")
             if 溜鱼_midpoint_pix_range is None or 溜鱼_midpoint_sleep_time is None:
@@ -52,11 +53,15 @@ class Fish_溜鱼(CustomAction):
             if not 0 <= 溜鱼_midpoint_sleep_time < 200:
                 raise ValueError("溜鱼_midpoint_sleep_time 值范围不正常")
         except Exception as e:
-            log.error(f"选项初始化错误: {e} {e!r}")
+            log.error(f"{self.__class__.__name__} 选项初始化错误: {e} {e!r}")
             return False
 
         for _ in range(MAX_RANGE):
-            img: np.typing.NDArray = get_img(controller)
+            try:
+                img: np.typing.NDArray = get_img(controller)
+            except Exception as e:
+                log.debug(f"获取截图失败: {e}")
+                continue
 
             greem_reco_detail = context.run_recognition(
                 "匹配绿色",
@@ -139,6 +144,21 @@ class Fish_卖鱼_and_买换饵(CustomAction):
     ) -> bool:
         controller = context.tasker.controller
 
+        try:
+            param = json.loads(argv.custom_action_param)
+            if not isinstance(param, dict):
+                raise TypeError("缺少 argv.custom_action_param 或类型错误")
+
+            买饵次数 = param.get("买饵次数")
+            if 买饵次数 is None:
+                raise ValueError("必须填值")
+            买饵次数 = int(买饵次数)
+            if not 0 < 买饵次数 < 20:
+                raise ValueError("买饵次数 值范围不正常")
+        except Exception as e:
+            log.error(f"{self.__class__.__name__} 选项初始化错误: {e} {e!r}")
+            return False
+
         _get_img = functools.partial(get_img, controller=controller)
 
         def 检测初始状态() -> bool:
@@ -157,7 +177,7 @@ class Fish_卖鱼_and_买换饵(CustomAction):
             (lambda: controller.post_click_key(Win_virtual_key.Q.value.code), 1.5),
             (lambda: controller.post_click(100, 280), 1),  # 归流鱼舱
             (lambda: controller.post_click(710, 645), 1),  # 一键出售
-            (lambda: controller.post_click(780, 470), 1.5),  # 确认
+            (lambda: controller.post_click(780, 470), 2),  # 确认
             (lambda: controller.post_click(640, 640), 1),  # 点击空白
             (
                 lambda: controller.post_click_key(Win_virtual_key.VK_ESCAPE.value.code),
@@ -202,7 +222,7 @@ class Fish_卖鱼_and_买换饵(CustomAction):
                 continue
 
             controller.post_click(ocr_res.box[0], ocr_res.box[1]).wait()
-            time.sleep(1.5)
+            time.sleep(1)
             匹配万能鱼饵价格_reco_detail = context.run_recognition(
                 "匹配万能鱼饵价格",
                 _get_img(),
@@ -224,15 +244,16 @@ class Fish_卖鱼_and_买换饵(CustomAction):
                 log.error(f"{Fish_卖鱼_and_买换饵.__name__} 匹配万能鱼饵价格 识别不到")
                 return False
             all_results = 匹配万能鱼饵价格_reco_detail.all_results
-            if len(all_results) != 1:
-                log.warning(f"价格匹配数不是 1: {all_results}")
-                continue
-            if not isinstance(all_results[0], OCRResult):
-                log.error("匹配万能鱼饵价格 OCR 结果不是 OCRResult 类型")
+            if not type_match(all_results, Sequence[OCRResult]):
+                log.error("匹配万能鱼饵价格 OCR 结果不是 Sequence[OCRResult] 类型")
                 return False
+            if len(all_results := [r for r in all_results if r.score > 0.8]) != 1:
+                log.warning(f"匹配万能鱼饵价格 匹配数不是 1: {all_results}")
+                continue
             if all_results[0].score < 0.96 or all_results[0].text != "5":
                 continue
-            for _ in range(4):  # 买 n * 99 个
+
+            for _ in range(买饵次数):  # 买 n * 99 个
                 for action, sleep_time in (
                     (lambda: controller.post_click(1218, 636), 0.5),  # 加满
                     (lambda: controller.post_click(1074, 688), 1),  # 购买
@@ -298,7 +319,7 @@ class Fish_卖鱼_and_买换饵(CustomAction):
             (lambda: controller.post_click(496, 360), 1),
             (
                 lambda: controller.post_click_key(Win_virtual_key.VK_ESCAPE.value.code),
-                1.5,
+                1,
             ),
             (lambda: controller.post_click(780, 472), 0.5),  # 更换
         ):
