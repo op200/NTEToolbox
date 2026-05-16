@@ -13,6 +13,18 @@ if TYPE_CHECKING:
     from maa.context import Context
 
 
+class maa_option:
+    file_path = Path("config", "maa_option.json")
+
+    @classmethod
+    def read(cls) -> dict[str, int | bool]:
+        return json.loads(cls.file_path.read_text(encoding="utf-8"))
+
+    @classmethod
+    def write(cls, option: dict[str, int | bool]) -> int:
+        return cls.file_path.write_text(json.dumps(option, indent=4), encoding="utf-8")
+
+
 @AgentServer.custom_action("全局设置")
 class 全局设置(CustomAction):
     @override
@@ -54,23 +66,18 @@ class 全局设置(CustomAction):
             setup_logger("INFO")
             Tasker.set_debug_mode(False)
 
-        maa_option_path = Path("config", "maa_option.json")
-        maa_option: dict[str, int | bool] = json.loads(
-            maa_option_path.read_text(encoding="utf-8")
-        )
-        maa_option_old: Final = deepcopy(maa_option)
+        maa_option_dict: dict[str, int | bool] = maa_option.read()
+        maa_option_dict_old: Final = deepcopy(maa_option_dict)
 
-        maa_option["logging"] = logging_switch
+        maa_option_dict["logging"] = logging_switch
 
         modified: bool = False
-        for k, v in maa_option_old.items():
-            if (new := maa_option[k]) != v:
+        for k, v in maa_option_dict_old.items():
+            if (new := maa_option_dict[k]) != v:
                 log.info(f"修改 maa_option.{k}: {v} -> {new}")
                 modified = True
         if modified:
-            maa_option_path.write_text(
-                json.dumps(maa_option, indent=4), encoding="utf-8"
-            )
-            log.info(f'已覆写 "{maa_option_path}"，重启后生效')
+            maa_option.write(maa_option_dict)
+            log.info(f'已覆写 "{maa_option.file_path}"，重启后生效')
 
         return True

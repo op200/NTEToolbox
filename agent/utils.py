@@ -3,6 +3,7 @@ import json
 import re
 import urllib.request
 from pathlib import Path
+from pprint import pformat
 from threading import Thread
 from typing import TYPE_CHECKING, Any, TypeGuard, get_args, get_origin, override
 
@@ -151,6 +152,18 @@ class Adswq(CustomRecognition):
         Thread(target=check_release, daemon=True).start()
 
         controller = context.tasker.controller
+
+        from .setting import maa_option
+
+        if maa_option.file_path.is_file():
+            maa_option_dict = maa_option.read()
+            log.info(
+                f'检查配置文件 "{maa_option.file_path}" (不代表当前配置，修改配置后需要重启才是实际配置):'
+            )
+            log.debug(f"{maa_option.file_path}:\n{pformat(maa_option_dict)}")
+            log.info(
+                "maafw 日志写入: " + ("启用" if maa_option_dict["logging"] else "关闭")
+            )
 
         success: bool = True
 
